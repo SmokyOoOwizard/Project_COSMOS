@@ -1,3 +1,16 @@
-﻿{
-	"name": "COSMOS.Core"
+{
+    "name": "COSMOS.Core",
+    "references": [
+        "GUID:623b438ad9801f644a1722dc458cca68",
+        "GUID:5e8e27b8758f5ea489aeff7291cf21e5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
