@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -81,7 +82,7 @@ namespace COSMOS.Core
         public static void Init()
         {
             ExecuteObjects.Clear();
-            MainObject = (new GameObject("Main threading object")).AddComponent<ExecuteObject>();
+            MainObject = new GameObject("Main threading object").AddComponent<ExecuteObject>();
             GameObject.DontDestroyOnLoad(MainObject.gameObject);
         }
 
@@ -117,6 +118,33 @@ namespace COSMOS.Core
             else
             {
                 MainObject.Execute(() => { action?.Invoke(); thread.Interrupt(); });
+            }
+        }
+
+        public static void StartCoroutine(IEnumerator coroutine)
+        {
+            if (MainObject != null)
+            {
+                MainObject.StartCoroutine(coroutine);
+            }
+        }
+        public static void StartCoroutine(IEnumerator coroutine, Action callback)
+        {
+            if (MainObject != null && coroutine != null)
+            {
+                MainObject.StartCoroutine(executeCoroutine(coroutine, callback));
+            }
+        }
+        private static IEnumerator executeCoroutine(IEnumerator coroutine, Action callback)
+        {
+            if (coroutine != null)
+            {
+                while (coroutine.MoveNext())
+                {
+                    yield return coroutine.Current;
+                }
+
+                callback?.Invoke();
             }
         }
     }
