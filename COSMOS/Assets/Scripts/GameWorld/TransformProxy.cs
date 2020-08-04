@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 using COSMOS.Core;
 
-namespace COSMOS
+namespace COSMOS.GameWorld
 {
     public class TransformProxy : MonoBehaviour
     {
-        public COSMOS.Core.Transform TargetTransform;
+        public Transform TargetTransform;
         private void Update()
         {
             if (TargetTransform != null)

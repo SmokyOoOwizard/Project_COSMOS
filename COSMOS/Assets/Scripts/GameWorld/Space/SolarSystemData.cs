@@ -1,4 +1,4 @@
-﻿namespace COSMOS.Core.Space
+﻿namespace COSMOS.GameWorld.Space
 {
     public class SolarSystemData
     {

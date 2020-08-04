@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace COSMOS.Core.Space
+namespace COSMOS.GameWorld.Space
 {
     public class PhysicsBodyConstructor : ICloneable
     {

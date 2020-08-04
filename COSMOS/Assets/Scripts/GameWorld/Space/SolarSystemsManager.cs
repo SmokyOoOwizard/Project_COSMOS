@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using COSMOS.Core;
 
-namespace COSMOS.Core.Space
+namespace COSMOS.GameWorld.Space
 {
     public static class SolarSystemsManager
     {

@@ -57,7 +57,6 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Test.cs" />
     <Compile Include="Assets\Scripts\CameraController.cs" />
-    <Compile Include="Assets\Scripts\TransformProxy.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\Scripts\COSMOS.asmdef" />
@@ -641,6 +640,14 @@
     <ProjectReference Include="LogLover.csproj">
       <Project>{EE721F10-32BE-76AB-CF43-40F64C09C7AC}</Project>
       <Name>LogLover</Name>
+    </ProjectReference>
+    <ProjectReference Include="COSMOS.GameWorld.csproj">
+      <Project>{C4EC772C-A4A5-4334-1042-2A84F706EA7F}</Project>
+      <Name>COSMOS.GameWorld</Name>
+    </ProjectReference>
+    <ProjectReference Include="COSMOS.GameWorld.Space.csproj">
+      <Project>{33314B90-0716-B59C-DE20-4F0B7701C3A4}</Project>
+      <Name>COSMOS.GameWorld.Space</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

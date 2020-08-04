@@ -9,10 +9,10 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{4B6D4B28-B4B0-4600-87B4-94A81F1CE99A}</ProjectGuid>
+    <ProjectGuid>{33314B90-0716-B59C-DE20-4F0B7701C3A4}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>COSMOS.Core</AssemblyName>
+    <AssemblyName>COSMOS.GameWorld.Space</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <BaseDirectory>.</BaseDirectory>
@@ -55,13 +55,15 @@
     <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Core\UnityThreading.cs" />
-    <Compile Include="Assets\Scripts\Core\EventDispatcher.cs" />
-    <Compile Include="Assets\Scripts\Core\VectorExtantion.cs" />
-    <Compile Include="Assets\Scripts\Core\SingltonMono.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\Space\SolarSystemData.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\Space\PhysicsBodyConstructor.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\Space\SpaceObject.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\Space\SolarSystemInstance.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\Space\SolarSystemsManager.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\Space\SolarSystemArtist.cs" />
   </ItemGroup>
   <ItemGroup>
-     <None Include="Assets\Scripts\Core\COSMOS.Core.asmdef" />
+     <None Include="Assets\Scripts\GameWorld\Space\COSMOS.GameWorld.Space.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2020.1.0f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -631,6 +633,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Box2D.csproj">
+      <Project>{099D9C61-F7BD-CDEB-A068-675CE1242686}</Project>
+      <Name>Box2D</Name>
+    </ProjectReference>
+    <ProjectReference Include="COSMOS.Core.csproj">
+      <Project>{4B6D4B28-B4B0-4600-87B4-94A81F1CE99A}</Project>
+      <Name>COSMOS.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="COSMOS.GameWorld.csproj">
+      <Project>{C4EC772C-A4A5-4334-1042-2A84F706EA7F}</Project>
+      <Name>COSMOS.GameWorld</Name>
+    </ProjectReference>
     <ProjectReference Include="LogLover.csproj">
       <Project>{EE721F10-32BE-76AB-CF43-40F64C09C7AC}</Project>
       <Name>LogLover</Name>

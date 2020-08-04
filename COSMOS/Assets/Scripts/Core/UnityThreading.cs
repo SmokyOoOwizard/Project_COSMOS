@@ -24,13 +24,13 @@ namespace COSMOS.Core
             Queue<Action> fixedUpdateActions = new Queue<Action>();
 
             public int CountOfQueueExecutePerUpdate = 100;
-            public bool UseClampForUpdate;
+            public bool UseClampForUpdate = false;
 
             public int CountOfQueueExecutePerLateUpdate = 100;
-            public bool UseClampForLateUpdate;
+            public bool UseClampForLateUpdate = false;
 
             public int CountOfQueueExecutePerFixedUpdate = 100;
-            public bool UseClampForFixedUpdate;
+            public bool UseClampForFixedUpdate = false;
 
 
             private void Update()

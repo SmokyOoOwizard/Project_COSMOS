@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using Box2DSharp.Dynamics;
+using COSMOS.Core;
 
-namespace COSMOS.Core
+namespace COSMOS.GameWorld
 {
     public class Transform
     {
