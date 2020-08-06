@@ -11,16 +11,11 @@ namespace COSMOS.GameWorld.Space
     [WorldArtist(typeof(SolarSystemArtist))]
     public class SolarSystemInstance : WorldInstance
     {
-        public SolarSystemData Data { get; protected set; }
-
-
         internal World PhysicsWorld;
 
-        internal SolarSystemInstance(SolarSystemData systemData)
+        public SolarSystemInstance(WorldCreateData createData) : base(createData)
         {
             PhysicsWorld = new World(new System.Numerics.Vector2(0));
-
-            Data = systemData;
         }
 
         public void AttachSpaceObject(SpaceObject spaceObject)
@@ -44,12 +39,19 @@ namespace COSMOS.GameWorld.Space
             }
         }
 
+        protected override void Update(float delta)
+        {
+            base.Update(delta);
+
+            PhysicsSimulate(delta);
+        }
+
         internal void PhysicsSimulate(float delta)
         {
             PhysicsWorld.Step(delta, 8, 3);
         }
 
-        internal static SolarSystemInstance CreateInstance(SolarSystemData systemData)
+        internal static SolarSystemInstance CreateInstance(WorldCreateData systemData)
         {
             if (systemData == null)
             {
