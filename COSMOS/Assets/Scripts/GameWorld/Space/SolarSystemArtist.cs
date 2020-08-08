@@ -34,11 +34,11 @@ namespace COSMOS.GameWorld.Space
             world.AddListener(WorldInstance.WorldInstanceEvents.OnAddObject, onAddObject);
         }
 
-        private void onAddObject(object obj)
+        private void onAddObject(CosmosEvent obj)
         {
-            if (obj is SpaceObject)
+            if (obj.EventObject is SpaceObject)
             {
-                var spaceObject = obj as SpaceObject;
+                var spaceObject = obj.EventObject as SpaceObject;
                 UnityThreading.Execute(() =>
                 {
                     var gobj = GameObject.CreatePrimitive(PrimitiveType.Cube);
