@@ -1,0 +1,15 @@
+{
+    "name": "COSMOS.Common.Inventory",
+    "references": [
+        "GUID:0a1abd14e874cb54d8376385190c2b08"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
