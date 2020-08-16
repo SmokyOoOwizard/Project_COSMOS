@@ -17,7 +17,7 @@ namespace COSMOS.GameWorld
             Loading,
             Loaded
         }
-        public WorldInstance World { get; protected set; }
+        public WorldInstance World { get; internal set; }
         public WorldStatus CurrentWorldStatus { get; protected set; }
         internal bool WasInit = false;
 
@@ -30,9 +30,10 @@ namespace COSMOS.GameWorld
 
         internal void _SetWorld(WorldInstance world)
         {
-            SetWorld(world);
+            World = world;
+            OnSetWorld(world);
         }
-        protected abstract void SetWorld(WorldInstance world);
+        protected abstract void OnSetWorld(WorldInstance world);
 
         internal void _Deinit()
         {
@@ -40,11 +41,17 @@ namespace COSMOS.GameWorld
         }
         protected abstract void Deinit();
 
-        internal IEnumerator _LoadWorld()
+        internal Task _LoadWorld()
         {
             return LoadWorld();
         }
-        protected abstract IEnumerator LoadWorld();
+        protected abstract Task LoadWorld();
+
+        internal Task _UnloadWorld()
+        {
+            return UnloadWorld();
+        }
+        protected abstract Task UnloadWorld();
 
         public abstract bool IsCorrectWorld(WorldInstance world);
     }

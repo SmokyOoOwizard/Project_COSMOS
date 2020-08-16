@@ -1,6 +1,7 @@
 ﻿using COSMOS.Core;
 using System;
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace COSMOS.GameWorld
@@ -16,12 +17,39 @@ namespace COSMOS.GameWorld
         public static event Action<WorldInstance> OnStartLoadWorld;
         public static event Action<WorldArtist> OnChangeArtist;
 
+        public static Task CurrentLoadTask { get; private set; }
         public static bool ChangeWorld(WorldInstance world)
         {
             if (changeWorld(world))
             {
                 OnChangeWorld?.Invoke(CurrentWorld);
+
                 return true;
+            }
+            return false;
+        }
+        private static bool changeWorld(WorldInstance world)
+        {
+            if (world != null)
+            {
+                if (CurrentWorld != world)
+                {
+                    if (CurrentArtist == null || CurrentArtist.IsCorrectWorld(world))
+                    {
+                        if (CurrentWorld != null)
+                        {
+                            CurrentWorld.Visible = false;
+                        }
+                        CurrentWorld = world;
+
+                        if (CurrentArtist != null)
+                        {
+                            CurrentArtist._SetWorld(world);
+                        }
+                        CurrentWorld.Visible = true;
+                        return true;
+                    }
+                }
             }
             return false;
         }
@@ -49,6 +77,17 @@ namespace COSMOS.GameWorld
                     if (artistType.IsSubclassOf(typeof(WorldArtist)))
                     {
                         var artist = Activator.CreateInstance(artistType) as WorldArtist;
+                        if(CurrentArtist != null)
+                        {
+                            if(CurrentArtist.CurrentWorldStatus != WorldArtist.WorldStatus.Unloaded)
+                            {
+                                return false;
+                            }
+                            if(CurrentArtist.GetType() == artistType)
+                            {
+                                artist = CurrentArtist;
+                            }
+                        }
                         if (artist.IsCorrectWorld(world))
                         {
                             var oldWorld = CurrentWorld;
@@ -59,7 +98,7 @@ namespace COSMOS.GameWorld
                             if (changeWorld(world) && (changeArtist(artistType) || (oldArtis != null && artistType == oldArtis.GetType())))
                             {
                                 OnChangeWorld?.Invoke(CurrentWorld);
-                                if (oldArtis != null)
+                                if (oldArtis != null && oldArtis != artist)
                                 {
                                     oldArtis._Deinit();
                                     if (oldArtis.GetType() != artistType)
@@ -89,6 +128,7 @@ namespace COSMOS.GameWorld
             if (changeArtist(artistType))
             {
                 OnChangeArtist?.Invoke(CurrentArtist);
+                return true;
             }
             return false;
         }
@@ -118,30 +158,10 @@ namespace COSMOS.GameWorld
             }
             return false;
         }
-        private static bool changeWorld(WorldInstance world)
-        {
-            if (world != null)
-            {
-                if (CurrentWorld != world)
-                {
-                    if (CurrentArtist == null || CurrentArtist.IsCorrectWorld(world))
-                    {
-                        CurrentWorld = world;
-
-                        if (CurrentArtist != null)
-                        {
-                            CurrentArtist._SetWorld(world);
-                        }
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
 
         public static bool StartWorldLoad(Action callback)
         {
-            if (CurrentArtist != null && CurrentWorld != null)
+            if (CurrentArtist != null && CurrentWorld != null && (CurrentLoadTask == null || CurrentLoadTask.IsCompleted))
             {
                 if (CurrentArtist.World == CurrentWorld && CurrentArtist.CurrentWorldStatus == WorldArtist.WorldStatus.Unloaded)
                 {
@@ -151,7 +171,8 @@ namespace COSMOS.GameWorld
                     {
                         trueCallback += callback;
                     }
-                    UnityThreading.StartCoroutine(CurrentArtist._LoadWorld(), trueCallback);
+                    CurrentLoadTask = CurrentArtist._LoadWorld();
+                    CurrentLoadTask.ContinueWith(t => trueCallback.Invoke());
                     return true;
                 }
             }

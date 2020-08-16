@@ -13,15 +13,21 @@ namespace COSMOS.GameWorld
     {
         public static ReadOnlyCollection<WorldInstance> LoadedWorlds => loadedWorlds.AsReadOnly();
         private static List<WorldInstance> loadedWorlds = new List<WorldInstance>();
+        private static List<Action> loadedWorldsUpdate = new List<Action>();
+        private static List<Action> loadedWorldsPhysicsUpdate = new List<Action>();
 
-        public static Task WorldsUpdate(float delta)
+        public static float Delta;
+        public static float PhysicsDelta;
+
+        public static void WorldsUpdate(float delta)
         {
-            List<Task> simulations = new List<Task>(loadedWorlds.Count);
-            foreach (var item in loadedWorlds)
-            {
-                simulations.Add(Task.Run(() => item._Update(delta)));
-            }
-            return Task.WhenAll(simulations.ToArray());
+            Delta = delta;
+            Parallel.Invoke(loadedWorldsUpdate.ToArray());
+        }
+        public static void WorldsPhysicsUpdate(float delta)
+        {
+            PhysicsDelta = delta;
+            Parallel.Invoke(loadedWorldsPhysicsUpdate.ToArray());
         }
 
         public static W LoadWorld<W>(WorldCreateData createData) where W : WorldInstance
@@ -44,7 +50,7 @@ namespace COSMOS.GameWorld
                         }
                     }
 
-                    worldInstance = Activator.CreateInstance(typeof(W),createData) as W;
+                    worldInstance = Activator.CreateInstance(typeof(W), createData) as W;
                     if (worldInstance == null)
                     {
                         Log.Error($"World creation error.", typeof(W).FullName, createData.GetType().FullName, "Manager", "Load");
@@ -60,15 +66,35 @@ namespace COSMOS.GameWorld
                 catch (Exception ex)
                 {
                     Log.Error(ex, "Manager", "Load");
+                    return null;
                 }
 
                 if (worldInstance != null)
                 {
                     loadedWorlds.Add(worldInstance);
+                    loadedWorldsUpdate.Add(worldInstance._UpdateWorld);
+                    loadedWorldsUpdate.Add(worldInstance._PhysicsUpdate);
+
+                    worldInstance.Loaded = true;
                 }
                 return worldInstance;
             }
             return null;
+        }
+        public static bool UnloadWorld(WorldInstance world)
+        {
+            if (world != null)
+            {
+                if (loadedWorlds.Remove(world))
+                {
+                    loadedWorldsUpdate.Remove(world._UpdateWorld);
+                    loadedWorldsPhysicsUpdate.Remove(world._PhysicsUpdate);
+
+                    world.Loaded = false;
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
