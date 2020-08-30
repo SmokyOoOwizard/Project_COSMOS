@@ -7,23 +7,17 @@ using System.Threading.Tasks;
 
 namespace COSMOS.GameWorld
 {
+    public interface IUpdate
+    {
+        void Update(float delta);
+    }
     public abstract class WorldObject
     {
-        public WorldInstance World { get; internal set; }
-        public Transform Transform { get; internal set; }
-        
+        public Transform Transform { get; private set; }
+
         public WorldObject()
         {
             Transform = new Transform();
-        }
-
-        internal void _Update()
-        {
-            Update();
-        }
-        protected virtual void Update()
-        {
-
         }
     }
 }
