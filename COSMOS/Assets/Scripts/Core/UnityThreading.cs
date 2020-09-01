@@ -107,7 +107,7 @@ namespace COSMOS.Core
         public static void WaitExecute(Action action, Queue queue = Queue.Update)
         {
             Thread thread = Thread.CurrentThread;
-            if (Task.CurrentId.HasValue)
+            if (Task.CurrentId.HasValue || !GameData.IsMainThread)
             {
                 ManualResetEvent resetEvent = new ManualResetEvent(false);
 
