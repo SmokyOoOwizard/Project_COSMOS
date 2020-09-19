@@ -17,6 +17,7 @@ namespace COSMOS.GameWorld
 
         private static AutoResetEvent[] threadsUpdateEvent;
         private static bool[] threadsWaitCount;
+        private static bool threadRun;
         private static int updatesCountPerThread;
         private static volatile float updatesDelta;
 
@@ -26,6 +27,7 @@ namespace COSMOS.GameWorld
             int count = 3;
             threadsWaitCount = new bool[count];
             threadsUpdateEvent = new AutoResetEvent[count];
+            threadRun = true;
             for (int i = 0; i < count; i++)
             {
                 int q = i;
@@ -34,8 +36,20 @@ namespace COSMOS.GameWorld
                 t.Start();
             }
         }
-        public static void nextIteration()
+        public static void Deinit()
         {
+            threadRun = false;
+        }
+        public static void NextIteration(float delta)
+        {
+            for (int i = 0; i < threadsWaitCount.Length; i++)
+            {
+                if (!threadsWaitCount[i])
+                {
+                    return;
+                }
+            }
+            updatesDelta = delta;
             toRemoveProcess();
             startIterationProcess();
         }
@@ -49,14 +63,6 @@ namespace COSMOS.GameWorld
         }
         private static void startIterationProcess()
         {
-            for (int i = 0; i < threadsWaitCount.Length; i++)
-            {
-                if (!threadsWaitCount[i])
-                {
-                    return;
-                }
-            }
-
             for (int i = 0; i < threadsUpdateEvent.Length; i++)
             {
                 threadsUpdateEvent[i].Set();
@@ -64,7 +70,7 @@ namespace COSMOS.GameWorld
         }
         private static void objectsToUpdateProcess(int offset)
         {
-            //while (true)
+            while (threadRun)
             {
                 threadsUpdateEvent[offset].WaitOne();
                 threadsWaitCount[offset] = false;

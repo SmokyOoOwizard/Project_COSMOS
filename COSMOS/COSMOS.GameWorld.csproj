@@ -56,7 +56,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\GameWorld\WorldObject.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\WorldInstance.cs" />
     <Compile Include="Assets\Scripts\GameWorld\WorldManager.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\WorldSector.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\WorldStreamer.cs" />
+    <Compile Include="Assets\Scripts\GameWorld\WorldSectorStreamer.cs" />
     <Compile Include="Assets\Scripts\GameWorld\Transform.cs" />
     <Compile Include="Assets\Scripts\GameWorld\WorldArchitect.cs" />
   </ItemGroup>
