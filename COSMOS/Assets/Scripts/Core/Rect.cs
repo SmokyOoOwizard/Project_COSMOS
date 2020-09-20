@@ -1,4 +1,6 @@
-﻿namespace COSMOS.Core
+﻿using UnityEngine;
+
+namespace COSMOS.Core
 {
     public struct Rect
     {
@@ -19,6 +21,19 @@
             Height = height;
             Width = width;
         }
+
+        public Rect(Vector3Int sector) : this(new Vector3(sector.x, sector.y, sector.z))
+        {
+
+        }
+        public Rect(Vector3 sector)
+        {
+            X = sector.x;
+            Y = sector.y;
+            Height = 0;
+            Width = 0;
+        }
+
         public bool Intersect(Rect rect)
         {
             return !(rect.Left > Right || rect.Right < Left || rect.Top < Down || rect.Down > Top);
@@ -42,6 +57,25 @@
         public Rect GetRBQuad()
         {
             return new Rect(X + Width / 2, Y, Height / 2, Width / 2);
+        }
+
+        public override string ToString()
+        {
+            return "[" + X + ":" + Y + "][" + Width + ":" + Height + "]";
+        }
+
+        public static Rect MAX()
+        {
+            Rect r = new Rect();
+            r.Height = double.MaxValue;
+            r.Width = double.MaxValue;
+
+            double div = double.MinValue / 2;
+
+            r.X = div;
+            r.Y = div;
+
+            return r;
         }
     }
 }

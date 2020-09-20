@@ -4,19 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Collections;
 
 namespace COSMOS.Core
 {
-    public class QuadTree<T>
+    public class QuadTree<T> : IReadOnlyQuadTree<T>
     {
         private class Quad
         {
+            public Rect Rect { get { return rect; } }
             private Rect rect;
 
-            private Quad LT;
-            private Quad LB;
-            private Quad RT;
-            private Quad RB;
+            public Quad LT;
+            public Quad LB;
+            public Quad RT;
+            public Quad RB;
 
             private bool hasChildren { get { return LT != null; } }
             private bool empty { get { return Objects.Count == 0; } }
@@ -31,7 +33,7 @@ namespace COSMOS.Core
             }
 
             private List<KeyValuePair<T, Rect>> Objects = new List<KeyValuePair<T, Rect>>(MAX_OBJECTS_COUNT + 1);
-            private const int MAX_OBJECTS_COUNT = 4;
+            private const int MAX_OBJECTS_COUNT = 40;
             private const int MAX_DEEP = 20;
 
             private ReaderWriterLockSlim objectReadWriteLock = new ReaderWriterLockSlim();
@@ -192,21 +194,58 @@ namespace COSMOS.Core
                     childrenReadWriteLock.ExitWriteLock();
                 }
             }
+
+            public void Diff(Rect zone, List<T> toCheck, List<T> newObjects)
+            {
+                if (rect.Intersect(zone))
+                {
+                    objectReadWriteLock.EnterReadLock();
+                    for (int i = 0; i < Objects.Count; i++)
+                    {
+                        var obj = Objects[i];
+                        if (zone.Intersect(obj.Value))
+                        {
+                            if (!toCheck.Remove(obj.Key))
+                            {
+                                newObjects.Add(obj.Key);
+                            }
+                        }
+                    }
+                    objectReadWriteLock.ExitReadLock();
+                    if (hasChildren)
+                    {
+                        childrenReadWriteLock.EnterReadLock();
+                        LT.Diff(zone, toCheck, newObjects);
+                        LB.Diff(zone, toCheck, newObjects);
+                        RT.Diff(zone, toCheck, newObjects);
+                        RB.Diff(zone, toCheck, newObjects);
+                        childrenReadWriteLock.ExitReadLock();
+                    }
+                }
+            }
         }
 
         private readonly Quad root;
         private readonly Dictionary<T, Rect> ObjectsPositions = new Dictionary<T, Rect>();
 
+        public QuadTree()
+        {
+            root = new Quad(Rect.MAX());
+        }
         public QuadTree(Rect rect)
         {
             root = new Quad(rect);
         }
 
-        public T[] Query(Rect zone)
+        public List<T> Query(Rect zone)
         {
             var list = new List<T>();
             root.Query(zone, list);
-            return list.ToArray();
+            return list;
+        }
+        public void Diff(Rect zone, List<T> toCheck, List<T> newObjects)
+        {
+            root.Diff(zone, toCheck, newObjects);
         }
         public bool Insert(Rect zone, T obj)
         {
@@ -215,8 +254,13 @@ namespace COSMOS.Core
                 ObjectsPositions[obj] = zone;
                 return true;
             }
-            return false;
+            else
+            {
+
+                return false;
+            }
         }
+
         public bool Remove(T obj)
         {
             if (ObjectsPositions.TryGetValue(obj, out Rect zone))
@@ -229,5 +273,6 @@ namespace COSMOS.Core
             }
             return false;
         }
+
     }
 }
