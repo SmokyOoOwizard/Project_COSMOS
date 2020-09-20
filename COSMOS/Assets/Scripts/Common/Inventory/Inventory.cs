@@ -6,7 +6,7 @@ using System;
 
 namespace COSMOS.Common.Inventory
 {
-    public class Inventory : EventDispatcher<Inventory.Events>, IInventory
+    public class Inventory : EventDispatcher, IInventory
     {
         public enum Events
         {
@@ -62,13 +62,13 @@ namespace COSMOS.Common.Inventory
                         if (slot.PlaceItem(item))
                         {
                             FreeSlots.Remove(slot);
-                            Dispatch(Events.AddItem, item);
+                            dispatchEvent(Events.AddItem, new ItemEventData(item));
                             return true;
                         }
                     }
                     else if (slot.PlaceItem(item))
                     {
-                        Dispatch(Events.AddItem, item);
+                        dispatchEvent(Events.AddItem, new ItemEventData(item));
                         return true;
                     }
                 }
@@ -88,7 +88,7 @@ namespace COSMOS.Common.Inventory
                         {
                             FreeSlots.Add(slot);
                         }
-                        Dispatch(Events.ReplaceItem, (oldItem, newItem));
+                        dispatchEvent(Events.ReplaceItem, new ReplaceItemEventData(oldItem, newItem));
                         return true;
                     }
                 }
@@ -108,7 +108,7 @@ namespace COSMOS.Common.Inventory
                         {
                             FreeSlots.Add(slot);
                         }
-                        Dispatch(Events.RemoveItem, item);
+                        dispatchEvent(Events.RemoveItem, new ItemEventData(item));
                         return true;
                     }
                 }
@@ -126,7 +126,7 @@ namespace COSMOS.Common.Inventory
                 }
                 slot.AddRule(CheckItem);
                 Slots.Add(slot);
-                Dispatch(Events.AddSlot, slot);
+                dispatchEvent(Events.AddSlot, new SlotEventData(slot));
             }
             return false;
         }
@@ -138,7 +138,7 @@ namespace COSMOS.Common.Inventory
                 {
                     FreeSlots.Remove(slot);
                     slot.RemoveRule(CheckItem);
-                    Dispatch(Events.RemoveSlot, slot);
+                    dispatchEvent(Events.RemoveSlot, new SlotEventData(slot));
                     return true;
                 }
             }

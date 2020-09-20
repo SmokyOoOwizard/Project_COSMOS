@@ -1,120 +1,105 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace COSMOS.Core
 {
-    public delegate void EventDispatcherDelegate(CosmosEvent evt);
-    public class CosmosEvent
+    public delegate bool EventCallBack(Event evt);
+    public abstract class EventDispatcher
     {
-        public IEventDispatcher Caller { get; private set; }
-        public object EventObject { get; private set; }
+        private Dictionary<Type, Dictionary<int, List<EventCallBack>>> events = new Dictionary<Type, Dictionary<int, List<EventCallBack>>>();
+        private Mutex mutex = new Mutex();
 
-        public CosmosEvent(IEventDispatcher caller, object eventObject)
+        public bool AddListener<T>(EventCallBack action, T evt) where T : Enum
         {
-            Caller = caller;
-            EventObject = eventObject;
-        }
-    }
-    public class EventDispatcher : IEventDispatcher
-    {
-        private Dictionary<string, List<EventDispatcherDelegate>> listeners = new Dictionary<string, List<EventDispatcherDelegate>>();
-
-        public void AddListener(string evtName, EventDispatcherDelegate callback)
-        {
-            List<EventDispatcherDelegate> evtListeners = null;
-            if (listeners.TryGetValue(evtName, out evtListeners))
+            if (action != null)
             {
-                evtListeners.Remove(callback);
-                evtListeners.Add(callback);
-            }
-            else
-            {
-                evtListeners = new List<EventDispatcherDelegate>();
-                evtListeners.Add(callback);
-
-                listeners.Add(evtName, evtListeners);
-            }
-        }
-        public void DropListener(string evtName, EventDispatcherDelegate callback)
-        {
-            List<EventDispatcherDelegate> evtListeners = null;
-            if (listeners.TryGetValue(evtName, out evtListeners))
-            {
-                for (int i = 0; i < evtListeners.Count; i++)
+                var eventType = typeof(T);
+                int eventNumber = (int)(object)evt;
+                mutex.WaitOne();
+                if (events.TryGetValue(eventType, out Dictionary<int, List<EventCallBack>> eventTypeCollection))
                 {
-                    evtListeners.Remove(callback);
+                    if (eventTypeCollection.TryGetValue(eventNumber, out List<EventCallBack> RightTypeEvents))
+                    {
+                        RightTypeEvents.Add(action);
+                    }
+                    else
+                    {
+                        eventTypeCollection.Add(eventNumber, new List<EventCallBack>() { action });
+                    }
+                }
+                else
+                {
+                    events[eventType] = new Dictionary<int, List<EventCallBack>>() { { eventNumber, new List<EventCallBack>() { action } } };
+                }
+                mutex.ReleaseMutex();
+                return true;
+            }
+            return false;
+        }
+        public bool RemoveListener<T>(EventCallBack action, T evt) where T : Enum
+        {
+            if (action != null)
+            {
+                var eventType = typeof(T);
+                int eventNumber = (int)(object)evt;
+                mutex.WaitOne();
+                if (events.TryGetValue(eventType, out Dictionary<int, List<EventCallBack>> eventTypeCollection))
+                {
+                    if (eventTypeCollection.TryGetValue(eventNumber, out List<EventCallBack> RightTypeEvents))
+                    {
+                        bool result = RightTypeEvents.Remove(action);
+                        mutex.ReleaseMutex();
+                        return result;
+                    }
                 }
             }
+            return false;
         }
-        protected void Dispatch(string evtName, object obj)
+        protected void dispatchEvent<T>(T evt, IEventData data) where T : Enum
         {
-            List<EventDispatcherDelegate> evtListeners = null;
-            if (listeners.TryGetValue(evtName, out evtListeners))
+            var eventType = typeof(T);
+            int eventNumber = (int)(object)evt;
+            mutex.WaitOne();
+            if (events.TryGetValue(eventType, out Dictionary<int, List<EventCallBack>> eventTypeCollection))
             {
-                var evt = new CosmosEvent(this, obj);
-                for (int i = 0; i < evtListeners.Count; i++)
+                if (eventTypeCollection.TryGetValue(eventNumber, out List<EventCallBack> RightTypeEvents))
                 {
-                    evtListeners[i](evt);
-                }
-            }
-        }
-    }
-    public class EventDispatcher<E> : EventDispatcher, IEventDispatcher<E> where E : Enum
-    {
-        private Dictionary<E, List<EventDispatcherDelegate>> listeners = new Dictionary<E, List<EventDispatcherDelegate>>();
+                    var e = new Event<T>();
+                    e.EventType = evt;
+                    e.Data = data;
+                    e.Owner = this;
+                    Event evtObject = e as Event;
 
-        public void AddListener(E eventType, EventDispatcherDelegate callback)
-        {
-            List<EventDispatcherDelegate> evtListeners = null;
-            if (listeners.TryGetValue(eventType, out evtListeners))
-            {
-                evtListeners.Remove(callback);
-                evtListeners.Add(callback);
-            }
-            else
-            {
-                evtListeners = new List<EventDispatcherDelegate>();
-                evtListeners.Add(callback);
-
-                listeners.Add(eventType, evtListeners);
-            }
-        }
-        public void DropListener(E eventType, EventDispatcherDelegate callback)
-        {
-            List<EventDispatcherDelegate> evtListeners = null;
-            if (listeners.TryGetValue(eventType, out evtListeners))
-            {
-                for (int i = 0; i < evtListeners.Count; i++)
-                {
-                    evtListeners.Remove(callback);
-                }
-            }
-        }
-        protected void Dispatch(E eventType, object obj)
-        {
-            List<EventDispatcherDelegate> evtListeners = null;
-            if (listeners.TryGetValue(eventType, out evtListeners))
-            {
-                var evt = new CosmosEvent(this, obj);
-                for (int i = 0; i < evtListeners.Count; i++)
-                {
-                    evtListeners[i](evt);
+                    try
+                    {
+                        for (int i = 0; i < RightTypeEvents.Count; i++)
+                        {
+                            if (!RightTypeEvents[i].Invoke(evtObject))
+                            {
+                                RightTypeEvents.RemoveAt(i);
+                                i--;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                    finally
+                    {
+                        mutex.ReleaseMutex();
+                    }
                 }
             }
         }
 
-    }
-    public interface IEventDispatcher
-    {
-        void AddListener(string evtName, EventDispatcherDelegate callback);
-        void DropListener(string evtName, EventDispatcherDelegate callback);
-    }
-    public interface IEventDispatcher<E> : IEventDispatcher where E : Enum
-    {
-        void AddListener(E eventType, EventDispatcherDelegate callback);
-        void DropListener(E eventType, EventDispatcherDelegate callback);
+        ~EventDispatcher()
+        {
+            mutex.Dispose();
+        }
     }
 }

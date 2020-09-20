@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,9 +20,9 @@ namespace COSMOS.Core
         }
         class ExecuteObject : MonoBehaviour
         {
-            Queue<Action> updateActions = new Queue<Action>();
-            Queue<Action> lateUpdateActions = new Queue<Action>();
-            Queue<Action> fixedUpdateActions = new Queue<Action>();
+            ConcurrentQueue<Action> updateActions = new ConcurrentQueue<Action>();
+            ConcurrentQueue<Action> lateUpdateActions = new ConcurrentQueue<Action>();
+            ConcurrentQueue<Action> fixedUpdateActions = new ConcurrentQueue<Action>();
 
             public int CountOfQueueExecutePerUpdate = 100;
             public bool UseClampForUpdate = false;
@@ -38,7 +39,13 @@ namespace COSMOS.Core
                 int maxI = UseClampForUpdate ? Mathf.Min(updateActions.Count, CountOfQueueExecutePerUpdate) : updateActions.Count;
                 for (int i = 0; i < maxI; i++)
                 {
-                    updateActions.Dequeue()?.Invoke();
+                    if (updateActions.TryDequeue(out Action action))
+                    {
+                        if (action != null)
+                        {
+                            action.Invoke();
+                        }
+                    }
                 }
             }
             private void LateUpdate()
@@ -46,7 +53,13 @@ namespace COSMOS.Core
                 int maxI = UseClampForLateUpdate ? Mathf.Min(lateUpdateActions.Count, CountOfQueueExecutePerLateUpdate) : lateUpdateActions.Count;
                 for (int i = 0; i < maxI; i++)
                 {
-                    lateUpdateActions.Dequeue()?.Invoke();
+                    if (lateUpdateActions.TryDequeue(out Action action))
+                    {
+                        if (action != null)
+                        {
+                            action.Invoke();
+                        }
+                    }
                 }
             }
             private void FixedUpdate()
@@ -54,7 +67,13 @@ namespace COSMOS.Core
                 int maxI = UseClampForFixedUpdate ? Mathf.Min(fixedUpdateActions.Count, CountOfQueueExecutePerFixedUpdate) : fixedUpdateActions.Count;
                 for (int i = 0; i < maxI; i++)
                 {
-                    fixedUpdateActions.Dequeue()?.Invoke();
+                    if (fixedUpdateActions.TryDequeue(out Action action))
+                    {
+                        if (action != null)
+                        {
+                            action.Invoke();
+                        }
+                    }
                 }
             }
 
@@ -107,7 +126,7 @@ namespace COSMOS.Core
         public static void WaitExecute(Action action, Queue queue = Queue.Update)
         {
             Thread thread = Thread.CurrentThread;
-            if (Task.CurrentId.HasValue)
+            if (Task.CurrentId.HasValue || !GameData.IsMainThread)
             {
                 ManualResetEvent resetEvent = new ManualResetEvent(false);
 

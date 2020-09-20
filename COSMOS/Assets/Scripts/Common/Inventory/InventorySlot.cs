@@ -4,15 +4,8 @@ using System;
 
 namespace COSMOS.Common.Inventory
 {
-    public class InventorySlot : EventDispatcher<InventorySlot.Events>
+    public class InventorySlot : EventDispatcher
     {
-        public enum Events
-        {
-            PlaceItem,
-            ReplaceItem,
-            RemoveItem
-        }
-
         public Item Item { get; protected set; }
 
         public virtual bool Lock { get; protected set; }
@@ -26,7 +19,7 @@ namespace COSMOS.Common.Inventory
                 return false;
             }
             Item = item;
-            Dispatch(Events.PlaceItem, item);
+            dispatchEvent(Inventory.Events.AddItem, new ItemEventData(item));
             return true;
         }
         public virtual bool ReplaceItem(Item oldItem, Item newItem)
@@ -36,45 +29,45 @@ namespace COSMOS.Common.Inventory
                 return false;
             }
             Item = newItem;
-            Dispatch(Events.ReplaceItem, (oldItem, newItem));
+            dispatchEvent(Inventory.Events.ReplaceItem, new ReplaceItemEventData(oldItem, newItem));
             return true;
         }
         public virtual bool SwapItem(InventorySlot slot)
         {
             Item newItem = slot.Item;
-            if(Lock || slot.Lock)
+            if (Lock || slot.Lock)
             {
                 return false;
             }
-            if(newItem == Item)
+            if (newItem == Item)
             {
                 return true;
             }
-            if(Item == null && newItem != null)
+            if (Item == null && newItem != null)
             {
                 if (CheckItem(newItem))
                 {
                     Item = newItem;
                     slot.Item = null;
-                    Dispatch(Events.ReplaceItem, (Item, newItem));
+                    dispatchEvent(Inventory.Events.ReplaceItem, new ReplaceItemEventData(Item, newItem));
                     return true;
                 }
             }
-            else if(Item != null && slot.Item == null)
+            else if (Item != null && slot.Item == null)
             {
                 if (slot.CheckItem(Item))
                 {
                     slot.Item = Item;
                     Item = null;
-                    Dispatch(Events.ReplaceItem, (Item, newItem));
+                    dispatchEvent(Inventory.Events.ReplaceItem, new ReplaceItemEventData(Item, newItem));
                     return true;
                 }
             }
-            else if(CheckItem(newItem) && slot.CheckItem(Item))
+            else if (CheckItem(newItem) && slot.CheckItem(Item))
             {
                 slot.Item = Item;
                 Item = newItem;
-                Dispatch(Events.ReplaceItem, (Item, newItem));
+                dispatchEvent(Inventory.Events.ReplaceItem, new ReplaceItemEventData(Item, newItem));
                 return true;
             }
             return false;
@@ -86,7 +79,7 @@ namespace COSMOS.Common.Inventory
                 return false;
             }
             Item = null;
-            Dispatch(Events.RemoveItem, item);
+            dispatchEvent(Inventory.Events.RemoveItem, new ItemEventData(item));
             return true;
         }
 
