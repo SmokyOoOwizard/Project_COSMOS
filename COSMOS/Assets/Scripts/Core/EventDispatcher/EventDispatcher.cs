@@ -59,7 +59,7 @@ namespace COSMOS.Core
             }
             return false;
         }
-        protected void dispatchEvent<T>(T evt, IEventData data) where T : Enum
+        protected void dispatchEvent<T>(T evt, IEventData data = null) where T : Enum
         {
             var eventType = typeof(T);
             int eventNumber = (int)(object)evt;
