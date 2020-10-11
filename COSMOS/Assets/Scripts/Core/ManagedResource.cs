@@ -214,5 +214,10 @@ namespace COSMOS.Core
 
         protected abstract Task<ManageCompleteStatus> Unload();
         protected abstract Task<ManageCompleteStatus> Load();
+
+        ~ManagedResource()
+        {
+            TryUnload();
+        }
     }
 }
