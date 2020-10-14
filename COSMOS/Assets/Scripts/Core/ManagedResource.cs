@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace COSMOS.Core
@@ -10,9 +9,9 @@ namespace COSMOS.Core
         {
             public enum Status
             {
-                Error,
                 Loaded,
-                Unloaded
+                Unloaded,
+                Error
             }
             public Status CurrentStatus;
 
@@ -47,9 +46,6 @@ namespace COSMOS.Core
 
         public ResourceStatus CurrentStatus { get; private set; }
 
-        public virtual string ResourceName { get; protected set; }
-        public virtual string ResourcePath { get; protected set; }
-
         private KeyValuePair<ResourceTaskType, Task<ManageCompleteStatus>> currentResourceTask;
         public KeyValuePair<ResourceTaskType, Task<ManageCompleteStatus>> CurrentResourceTask { get { return currentResourceTask; } }
 
@@ -68,21 +64,21 @@ namespace COSMOS.Core
                 if (zero)
                 {
                     dispatchEvent(Events.HasLinks);
-                    TryLoad();
+                    tryLoad();
                 }
             }
         }
 
         public void Unreg(object lockObject)
         {
-            lock (refLockObject)
+            lock (lockObject)
             {
                 locks.Remove(lockObject);
 
-                if (locks.Count == 0)
+                if (locks.Count == 1)
                 {
                     dispatchEvent(Events.ZeroLinks);
-                    TryUnload();
+                    tryUnload();
                 }
             }
         }
@@ -118,7 +114,7 @@ namespace COSMOS.Core
                     {
                         loadTask.Start();
                     }
-                    else if (loadTask.IsCompleted)
+                    else if(loadTask.IsCompleted)
                     {
                         manageCompleteStatusHandle(loadTask.Result);
                     }
@@ -159,6 +155,10 @@ namespace COSMOS.Core
                     {
                         unloadTask.Start();
                     }
+                    else if (unloadTask.IsCompleted)
+                    {
+                        manageCompleteStatusHandle(unloadTask.Result);
+                    }
 
                     return true;
                 }
@@ -189,26 +189,9 @@ namespace COSMOS.Core
                     break;
                 case ManageCompleteStatus.Status.Error:
                     CurrentStatus = ResourceStatus.Error;
-                    Log.Error("Error while resource try unload/load process: " + this.ToString(),
+                    Log.Error("Error while resource try unload/load process: " + this.ToString(), 
                         GetType().Name, "ManagedResource");
                     break;
-            }
-            lock (refLockObject)
-            {
-                if (locks.Count == 0)
-                {
-                    if (CurrentStatus != ResourceStatus.Unloaded)
-                    {
-                        TryUnload();
-                    }
-                }
-                else
-                {
-                    if (CurrentStatus != ResourceStatus.Loaded)
-                    {
-                        TryLoad();
-                    }
-                }
             }
         }
 
