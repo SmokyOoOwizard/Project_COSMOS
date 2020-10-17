@@ -8,13 +8,13 @@ namespace COSMOS.ResourceStore
 {
     public abstract class Resource : EventDispatcher
     {
-        // ресурс
         public enum Status
         {
             Unloaded,
             Loaded,
             Unloading,
-            Loadign
+            Loading,
+            Error
         }
 
         public string Name { get; private set; }
@@ -25,29 +25,94 @@ namespace COSMOS.ResourceStore
 
         private readonly List<ResourceInstance> instances = new List<ResourceInstance>();
 
+        private readonly object instancesLock = new object();
+        private readonly object tryLoadUnloadLock = new object();
+
         protected void SetCurrentStatus(Status status)
         {
             CurrentStatus = status;
             dispatchEvent(status);
         }
 
-        public ResourceInstance GetInstance()
+        public void TryLoad()
         {
-            var instance = OnGetInstance();
-
-            if(instance != null)
+            if (CurrentStatus == Status.Unloaded || CurrentStatus == Status.Error)
             {
-                instances.Add(instance);
+                lock (tryLoadUnloadLock)
+                {
+                    if (CurrentStatus == Status.Unloaded || CurrentStatus == Status.Error)
+                    {
+                        tryLoad();
+                    }
+                }
             }
-
-            return instance;
+        }
+        public void TryUnload()
+        {
+            if (CurrentStatus == Status.Loaded || CurrentStatus == Status.Error)
+            {
+                lock (tryLoadUnloadLock)
+                {
+                    if (CurrentStatus == Status.Loaded || CurrentStatus == Status.Error)
+                    {
+                        lock (instancesLock)
+                        {
+                            if (instances.Count == 0)
+                            {
+                                tryUnload();
+                            }
+                        }
+                    }
+                }
+            }
         }
 
+        protected abstract void tryLoad();
+        protected abstract void tryUnload();
+
+        public ResourceInstance GetInstance()
+        {
+            lock (instancesLock)
+            {
+                var instance = OnGetInstance();
+
+                if (instance != null)
+                {
+                    instances.Add(instance);
+                }
+
+                return instance;
+            }
+        }
         protected abstract ResourceInstance OnGetInstance();
 
         internal void ReturnInstance(ResourceInstance instance)
         {
+            if (instance != null)
+            {
+                lock (instancesLock)
+                {
+                    if (instances.Remove(instance))
+                    {
+                        OnReturnInstance(instance);
+                    }
+                }
+            }
+        }
+        protected abstract void OnReturnInstance(ResourceInstance instance);
 
+
+        internal void ForceReturnInstances()
+        {
+            lock (instancesLock)
+            {
+                foreach (var instance in instances)
+                {
+                    instance.InternalFree();
+                    OnReturnInstance(instance);
+                }
+                instances.Clear();
+            }
         }
     }
 }

@@ -10,16 +10,21 @@
 
         public void Free()
         {
+            InternalFree();
+            if (Resource != null)
+            {
+                Resource.ReturnInstance(this);
+                Resource = null;
+            }
+        }
+
+        internal void InternalFree()
+        {
             if (IsFree)
             {
                 return;
             }
 
-
-            if (Resource != null)
-            {
-                Resource.ReturnInstance(this);
-            }
             OnFree();
         }
 
