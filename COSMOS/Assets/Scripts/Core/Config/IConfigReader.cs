@@ -1,4 +1,4 @@
-﻿ namespace COSMOS.Core.Config
+﻿namespace COSMOS.Core.Config
 {
     public interface IConfigReader
     {

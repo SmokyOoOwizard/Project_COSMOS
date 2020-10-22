@@ -44,33 +44,60 @@ namespace COSMOS.Core.Config
             {
                 for (int i = 0; i < reader.ChildCount; i++)
                 {
-                    var childReader = reader.GetChild(i);
-                    IConfig c = null;
-                    if(string.IsNullOrEmpty(childReader.Type))
+                    var subConfigReader = reader.GetChild(i);
+                    IConfig subConfig = null;
+                    if(string.IsNullOrEmpty(subConfigReader.Type))
                     {
-                        c = new Config();
+                        subConfig = new Config();
                     }
                     else
                     {
+                        subConfig = new Config();
                         // some check function for need create not default config
                     }
-                    if(c == null)
+
+                    if(subConfig == null)
                     {
-                        Log.Error("Create config failed.\n" + childReader.GetInfoForError(),
-                            "Config", "Parse", childReader.Type);
+                        Log.Error("Create config failed.\n" + subConfigReader.GetInfoForError(),
+                            "Config", "Parse", "NullException", subConfigReader.Type);
                     }
-                    else if (!c.TryParse(childReader))
+                    else if (!subConfig.TryParse(subConfigReader))
                     {
-                        Log.Error("Failed config parse.\n" + childReader.GetInfoForError(), 
-                            "Config", "Parse", childReader.Type);
+                        Log.Error("Failed config parse.\n" + subConfigReader.GetInfoForError(), 
+                            "Config", "Parse", subConfigReader.Type);
+                    }
+                    else if (string.IsNullOrEmpty(subConfig.Name))
+                    {
+                        Log.Error("Sub config name is null or empty.\n" + subConfigReader.GetInfoForError(),
+                            "Config", "Parse", "Name", subConfigReader.Type);
                     }
                     else
                     {
-                        args.Add(c.Name, c);
+                        args.Add(subConfig.Name, subConfig);
                     }
                 }
             }
             return true;
+        }
+
+        public static IConfig ParseConfig(IConfigReader reader)
+        {
+            if(reader == null)
+            {
+                return null;
+            }
+            try
+            {
+                IConfig c = new Config();
+                c.TryParse(reader);
+
+                return c;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Config parse error.\n" + ex, "Config", "Parse");
+            }
+            return null;
         }
     }
 }
