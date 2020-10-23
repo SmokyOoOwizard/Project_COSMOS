@@ -17,7 +17,7 @@ namespace ConfigTests
             {
                 IConfigReader reader = XmlConfigReader.CreateReader(
                     "<TestName>" +
-                    "   <SubConfig Type=\"ConfigType\">" +
+                    "   <SubConfig>" +
                     "       <SubConfigValue>TestValue</SubConfigValue>" +
                     "   </SubConfig>" +
                     "</TestName>");
@@ -30,7 +30,6 @@ namespace ConfigTests
                 var firstChild = reader.GetChild(0);
                 Assert.IsNotNull(firstChild);
                 Assert.AreEqual(firstChild.Name, "SubConfig");
-                Assert.AreEqual(firstChild.Type, "ConfigType");
 
                 var firstChildOfChild = firstChild.GetChild(0);
                 Assert.IsNotNull(firstChildOfChild);

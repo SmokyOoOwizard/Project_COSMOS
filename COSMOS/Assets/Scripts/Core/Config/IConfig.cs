@@ -1,16 +1,14 @@
 ﻿namespace COSMOS.Core.Config
 {
-    public interface IConfig
+    public interface IConfig : IRecord
     {
-        string Name { get; set; }
-        string Value { get; set; }
-
-        bool TryParse(IConfigReader reader);
-
-        IConfig this[string name]
+        IRecord this[string name]
         {
             get;
             set;
         }
+
+        IConfig GetConfig(string name);
+        bool TryGetConfig(string name, out IConfig config);
     }
 }

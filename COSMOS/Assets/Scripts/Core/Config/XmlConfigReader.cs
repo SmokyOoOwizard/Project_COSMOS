@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace COSMOS.Core.Config
 {
-    public class XmlConfigReader : IConfigReader
+    public class XmlConfigReader : IConfigReader, IConfigReaderErrorInfo
     {
         public bool HasChildren
         {
@@ -85,10 +85,13 @@ namespace COSMOS.Core.Config
         {
             string info = "Element: \"" + root.Name;
 
-            var lineInfo = root as IXmlLineInfo;
-            if (lineInfo.HasLineInfo())
+            if (root is IXmlLineInfo)
             {
-                info += "\" line: " + lineInfo.LineNumber;
+                var lineInfo = root as IXmlLineInfo;
+                if (lineInfo.HasLineInfo())
+                {
+                    info += "\" line: " + lineInfo.LineNumber;
+                }
             }
 
             return info;
