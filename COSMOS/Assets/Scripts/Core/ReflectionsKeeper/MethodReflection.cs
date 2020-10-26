@@ -5,8 +5,14 @@ namespace COSMOS.Core
 {
     public class MethodReflection : MemberReflectionInfo
     {
-        internal MethodReflection(MethodInfo method) : base()
+        public MethodInfo Method { get; private set; }
+        public Type Owner { get; private set; }
+
+        internal MethodReflection(MethodInfo method, Type owner) : base()
         {
+            Method = method;
+            Owner = owner;
+
             var atts = method.GetCustomAttributes(true);
             foreach (var att in atts)
             {

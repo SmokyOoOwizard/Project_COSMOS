@@ -5,8 +5,14 @@ namespace COSMOS.Core
 {
     public class FieldReflection : MemberReflectionInfo
     {
-        internal FieldReflection(FieldInfo field) : base()
+        public FieldInfo Field { get; private set; }
+        public Type Owner { get; private set; }
+
+        internal FieldReflection(FieldInfo field, Type owner) : base()
         {
+            Field = field;
+            Owner = owner;
+
             var atts = field.GetCustomAttributes(true);
             foreach (var att in atts)
             {

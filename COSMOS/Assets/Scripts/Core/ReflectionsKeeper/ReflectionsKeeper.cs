@@ -26,6 +26,10 @@ namespace COSMOS.Core
                 var assemblies = AppDomain.CurrentDomain.GetAssemblies();
                 foreach (var ass in assemblies)
                 {
+                    if(ass.FullName.StartsWith("Unity") || ass.FullName.StartsWith("System"))
+                    {
+                        continue;
+                    }
                     collectReflections(ass);
                 }
             }
