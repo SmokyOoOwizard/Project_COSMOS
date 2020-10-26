@@ -59,7 +59,7 @@ namespace COSMOS.Core
             }
             return false;
         }
-        protected void dispatchEvent<T>(T evt, IEventData data) where T : Enum
+        protected void dispatchEvent<T>(T evt, IEventData data = null) where T : Enum
         {
             var eventType = typeof(T);
             int eventNumber = (int)(object)evt;
@@ -68,19 +68,23 @@ namespace COSMOS.Core
             {
                 if (eventTypeCollection.TryGetValue(eventNumber, out List<EventCallBack> RightTypeEvents))
                 {
+
                     var e = new Event<T>();
                     e.EventType = evt;
                     e.Data = data;
                     e.Owner = this;
                     Event evtObject = e as Event;
 
+                    var events = new List<EventCallBack>(RightTypeEvents);
+                    mutex.ReleaseMutex();
+
                     try
                     {
-                        for (int i = 0; i < RightTypeEvents.Count; i++)
+                        for (int i = 0; i < events.Count; i++)
                         {
-                            if (!RightTypeEvents[i].Invoke(evtObject))
+                            if (!events[i].Invoke(evtObject))
                             {
-                                RightTypeEvents.RemoveAt(i);
+                                events.RemoveAt(i);
                                 i--;
                             }
                         }
@@ -89,12 +93,10 @@ namespace COSMOS.Core
                     {
                         throw ex;
                     }
-                    finally
-                    {
-                        mutex.ReleaseMutex();
-                    }
+                    return;
                 }
             }
+            mutex.ReleaseMutex();
         }
 
         ~EventDispatcher()

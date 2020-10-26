@@ -126,17 +126,17 @@ namespace COSMOS.Core
         public static void WaitExecute(Action action, Queue queue = Queue.Update)
         {
             Thread thread = Thread.CurrentThread;
-            if (Task.CurrentId.HasValue || !GameData.IsMainThread)
+            if (GameData.IsMainThread)
+            {
+                action?.Invoke();
+            }
+            else
             {
                 ManualResetEvent resetEvent = new ManualResetEvent(false);
 
                 MainObject.Execute(() => { action?.Invoke(); resetEvent.Set(); }, queue);
 
                 resetEvent.WaitOne();
-            }
-            else
-            {
-                MainObject.Execute(() => { action?.Invoke(); thread.Interrupt(); });
             }
         }
 

@@ -6,3 +6,4 @@
 /COSMOS/Logs/
 /COSMOS/UserSettings/
 /COSMOS/.vs/
+*.csproj
