@@ -12,19 +12,34 @@ namespace COSMOS.Core
         {
             
         }
-        public List<Attribute> GetAllAttributesByCondition<T>(Func<T, bool> condition) where T : Attribute
+
+        public List<T> GetAllAttributes<T>() where T : Attribute
         {
-            var result = new List<Attribute>();
+            var result = new List<T>();
+
+            foreach (var att in attributes)
+            {
+                if(att is T)
+                {
+                    result.Add(att as T);
+                }
+            }
+
+            return result;
+        }
+        public List<T> GetAllAttributesByCondition<T>(Func<T, bool> condition) where T : Attribute
+        {
+            var result = new List<T>();
 
             if (condition != null)
             {
-                foreach (var refl in attributes)
+                foreach (var att in attributes)
                 {
-                    if (refl is T)
+                    if (att is T)
                     {
-                        if (condition(refl as T))
+                        if (condition(att as T))
                         {
-                            result.Add(refl);
+                            result.Add(att as T);
                         }
                     }
                 }
