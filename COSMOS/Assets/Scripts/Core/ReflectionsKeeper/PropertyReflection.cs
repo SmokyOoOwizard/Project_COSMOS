@@ -5,8 +5,14 @@ namespace COSMOS.Core
 {
     public class PropertyReflection : MemberReflectionInfo
     {
-        internal PropertyReflection(PropertyInfo prop) : base()
+        public PropertyInfo Property { get; private set; }
+        public Type Owner { get; private set; }
+
+        internal PropertyReflection(PropertyInfo prop, Type owner) : base()
         {
+            Property = prop;
+            Owner = owner;
+
             var atts = prop.GetCustomAttributes(true);
             foreach (var att in atts)
             {

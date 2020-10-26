@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace COSMOS.Core
 {
@@ -10,6 +11,20 @@ namespace COSMOS.Core
         private readonly List<MethodReflection> methods = new List<MethodReflection>();
         private readonly List<PropertyReflection> properties = new List<PropertyReflection>();
         private readonly List<FieldReflection> fields = new List<FieldReflection>();
+
+        private IEnumerable<MemberInfo> getMembers(Type type, bool getStatic = true, bool getPrivate = true, bool getBases = true)
+        {
+            var memberList = new List<MemberInfo>();
+            if (type is null || type == typeof(Object)) return memberList;
+
+            var bindingFlags = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public;
+            if (getStatic) bindingFlags |= BindingFlags.Static;
+            if (getPrivate) bindingFlags |= BindingFlags.NonPublic;
+
+            memberList.AddRange(type.GetMembers(bindingFlags));
+            if (getBases) memberList.AddRange(getMembers(type.BaseType, getStatic, getPrivate, getBases));
+            return memberList;
+        }
 
         internal void Parse(Type typeToParse)
         {
@@ -25,30 +40,41 @@ namespace COSMOS.Core
                 attributes.Add(att as Attribute);
             }
 
-            foreach (var method in Type.GetMethods())
+            foreach (var member in getMembers(Type))
             {
-                var att = method.GetCustomAttributes(true);
-                if(att != null && att.Length > 0)
+                try
                 {
-                    methods.Add(new MethodReflection(method));
+                    if (member is MethodInfo)
+                    {
+                        var method = member as MethodInfo;
+                        var att = method.GetCustomAttributes(true);
+                        if (att != null && att.Length > 0)
+                        {
+                            methods.Add(new MethodReflection(method, Type));
+                        }
+                    }
+                    else if (member is PropertyInfo)
+                    {
+                        var prop = member as PropertyInfo;
+                        var att = prop.GetCustomAttributes(true);
+                        if (att != null && att.Length > 0)
+                        {
+                            properties.Add(new PropertyReflection(prop, Type));
+                        }
+                    }
+                    else if (member is FieldInfo)
+                    {
+                        var field = member as FieldInfo;
+                        var att = field.GetCustomAttributes(true);
+                        if (att != null && att.Length > 0)
+                        {
+                            fields.Add(new FieldReflection(field, Type));
+                        }
+                    }
                 }
-            }
-            
-            foreach (var prop in Type.GetProperties())
-            {
-                var att = prop.GetCustomAttributes(true);
-                if(att != null && att.Length > 0)
+                catch (Exception ex)
                 {
-                    properties.Add(new PropertyReflection(prop));
-                }
-            }
-            
-            foreach (var field in Type.GetFields())
-            {
-                var att = field.GetCustomAttributes(true);
-                if(att != null && att.Length > 0)
-                {
-                    fields.Add(new FieldReflection(field));
+                    Log.Error("Type: \"" + Type + "\" parse error.\n" + ex);
                 }
             }
         }

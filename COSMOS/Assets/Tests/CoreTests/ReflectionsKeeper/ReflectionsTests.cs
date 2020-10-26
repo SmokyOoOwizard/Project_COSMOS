@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace ReflectionsBagTests
 {
-    internal class AttributeForTest : Attribute 
+    internal class AttributeForTest : Attribute
     {
         public string Text;
 
@@ -35,11 +35,21 @@ namespace ReflectionsBagTests
         public int TestIntField;
         [AttributeForTest("TestText")]
         public int TestIntFieldWithText;
+        
+        [AttributeForTest]
+        public static int TestStaticIntField;
+        [AttributeForTest("TestText")]
+        public static int TestStaticIntFieldWithText;
 
         [AttributeForTest]
         private int testIntField;
         [AttributeForTest("TestText")]
         private int testIntFieldWithText;
+        
+        [AttributeForTest]
+        private static int testStaticIntField;
+        [AttributeForTest("TestText")]
+        private static int testStaticIntFieldWithText;
 
         [AttributeForTest]
         public int TestIntProperty { get; private set; }
@@ -72,7 +82,7 @@ namespace ReflectionsBagTests
         {
 
         }
-        
+
         [AttributeForTest]
         private void privateTestMethod()
         {
@@ -83,7 +93,7 @@ namespace ReflectionsBagTests
         {
 
         }
-        
+
         [AttributeForTest]
         private static void privateStaticTestMethod()
         {
@@ -107,7 +117,7 @@ namespace ReflectionsBagTests
 
     public class ReflectionsTests
     {
-        [SetUp]
+        [OneTimeSetUp]
         public void PrepareKeeperForTest()
         {
             ReflectionsKeeper.instance.CollectReflections();
@@ -120,19 +130,75 @@ namespace ReflectionsBagTests
         }
 
         [Test]
+        public void GetAllByConditionTest()
+        {
+            var all = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<AttributeForTest>((a, mri) => a.Text == "TestText");
+
+            Assert.NotZero(all.Count);
+        }
+
+        [Test]
+        public void GetPropertiesAndFieldsByAttributeTest()
+        {
+            var all = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<AttributeForTest>((a, mri) => mri is PropertyReflection || mri is FieldReflection);
+
+            Assert.IsTrue(all.Any((mri) => mri is PropertyReflection));
+
+            Assert.IsTrue(all.Any((mri) => mri is FieldReflection));
+
+            Assert.IsTrue(all.Any((mri) => 
+            {
+                if (!(mri is FieldReflection)) 
+                { 
+                    return false; 
+                }
+                var fr = mri as FieldReflection;
+
+                return fr.Field.IsStatic;
+            }));
+            
+            Assert.IsTrue(all.Any((mri) => 
+            {
+                if (!(mri is FieldReflection)) 
+                { 
+                    return false; 
+                }
+                var fr = mri as FieldReflection;
+
+                return fr.Field.IsStatic && fr.Field.IsPublic;
+            }));
+            
+            Assert.IsTrue(all.Any((mri) => 
+            {
+                if (!(mri is FieldReflection)) 
+                { 
+                    return false; 
+                }
+                var fr = mri as FieldReflection;
+
+                return fr.Field.IsStatic && fr.Field.IsPrivate;
+            }));
+        }
+        [Test]
+        public void GetMethodsByAttributeTest()
+        {
+
+        }
+
+
+        [Test]
         public void ClassAttributeTest()
         {
             var all = ReflectionsKeeper.instance.GetAllWithAttribute<AttributeForTest>();
 
             Assert.IsTrue(all.Any((x) => (x is TypeReflectionInfo) && (x as TypeReflectionInfo).Type == typeof(ReflectionTestClass)));
             Assert.IsTrue(all.Any((x) => (x is TypeReflectionInfo) && (x as TypeReflectionInfo).Type == typeof(ReflectionTestClass.InternalReflectionTestClass)));
-
-
         }
         [Test]
         public void StructAttributeTest()
         {
-            var all = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<AttributeForTest>((a, mri) => a.Text == "Struct");
+            var all = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<AttributeForTest>(
+                (a, mri) => mri is TypeReflectionInfo && (mri as TypeReflectionInfo).Type.IsValueType);
 
             Assert.IsNotNull(all);
             Assert.NotZero(all.Count);
