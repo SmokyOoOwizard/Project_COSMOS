@@ -1,11 +1,13 @@
 ﻿using NUnit.Framework;
 using COSMOS.Core.Config;
 using System.Collections.Generic;
+using COSMOS.Core;
 
 namespace ConfigTests
 {
     public class ConfigTests
     {
+        [Config("CustomConfigForTestCustomParse")]
         private class ConfigCustomParseTestClass : IConfig, IConfigParse
         {
             public string Name { get; set; }
@@ -57,6 +59,13 @@ namespace ConfigTests
                 return true;
             }
         }
+
+        [OneTimeSetUp]
+        public void CollectCustomConfigsInfo()
+        {
+            ReflectionsKeeper.instance.CollectReflections();
+        }
+
 
         [Test]
         public void CustomConfigParseTypeTest()
