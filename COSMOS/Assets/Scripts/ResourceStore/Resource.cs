@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using COSMOS.Core.Config;
 
 using COSMOS.Core;
 
@@ -100,6 +101,16 @@ namespace COSMOS.ResourceStore
             }
         }
         protected abstract void OnReturnInstance(ResourceInstance instance);
+
+        internal bool _TryParseResourceStructure(IConfig structure)
+        {
+            if(structure == null)
+            {
+                return false;
+            }
+            return TryParseResourceStucture(structure);
+        }
+        protected abstract bool TryParseResourceStucture(IConfig structure);
 
 
         internal void ForceReturnInstances()
