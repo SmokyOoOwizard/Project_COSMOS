@@ -150,7 +150,23 @@ namespace COSMOS.Core.Config
             {
                 foreach (var r in children)
                 {
-                    emptyConfig[r.Name] = r;
+                    var configValue = emptyConfig[r.Name];
+                    if (configValue == null)
+                    {
+                        emptyConfig[r.Name] = r;
+                    }
+                    else if (configValue is IRecordsWithIdenticalName)
+                    {
+                        (configValue as IRecordsWithIdenticalName).AddRecord(r);
+                    }
+                    else
+                    {
+                        var recordsContainer = new RecordsWithIdenticalName();
+                        recordsContainer.AddRecord(configValue);
+                        recordsContainer.AddRecord(r);
+
+                        emptyConfig[r.Name] = recordsContainer;
+                    }
                 }
             }
 

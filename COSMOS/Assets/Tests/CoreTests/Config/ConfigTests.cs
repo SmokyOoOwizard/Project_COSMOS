@@ -2,6 +2,7 @@
 using COSMOS.Core.Config;
 using System.Collections.Generic;
 using COSMOS.Core;
+using System.Linq;
 
 namespace ConfigTests
 {
@@ -121,6 +122,38 @@ namespace ConfigTests
 
                 Assert.IsNull(subConfig["NullObject"]);
 
+            }
+            catch (System.Exception ex)
+            {
+                Assert.Fail(ex.ToString());
+            }
+        }
+        
+        [Test]
+        public void ConfigParseRecordsWithIdenticalNameTest()
+        {
+            try
+            {
+                IConfigReader reader = XmlConfigReader.CreateReader(
+                        "<TestName>" +
+                        "   <SubConfig>test1</SubConfig>" +
+                        "   <SubConfig>test2</SubConfig>" +
+                        "</TestName>");
+
+                var config = ConfigFactory.Factory.ReadConfig(reader);
+
+                Assert.IsNotNull(config);
+                Assert.AreEqual(config.Name, "TestName");
+
+                var container = config["SubConfig"];
+                Assert.IsNotNull(container);
+
+                Assert.IsTrue(container is IRecordsWithIdenticalName);
+
+                var recordsContainer = container as IRecordsWithIdenticalName;
+
+                Assert.IsTrue(recordsContainer.GetRecords().Any(r => r is IRecordWithValue && (r as IRecordWithValue).Value == "test1"));
+                Assert.IsTrue(recordsContainer.GetRecords().Any(r => r is IRecordWithValue && (r as IRecordWithValue).Value == "test2"));
             }
             catch (System.Exception ex)
             {
