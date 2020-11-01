@@ -14,7 +14,7 @@ namespace ConfigTests
         {
             public string Name { get; set; }
 
-            public IDictionary<string, string> Args { get; private set; }
+            public IDictionary<string, string> Args { get; private set; } = new Dictionary<string, string>();
 
             public IRecord this[string name]
             {

@@ -59,8 +59,8 @@ namespace COSMOS.Core.Config
             {
                 if (!string.IsNullOrEmpty(reader.Type)) // create not default record
                 {
-                    string configType = reader.Type;
-                    var reflection = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<ConfigAttribute>((a, mri) => a.TypeName == configType);
+                    string recordType = reader.Type;
+                    var reflection = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<ConfigAttribute>((a, mri) => a.TypeName == recordType);
 
                     foreach (var refl in reflection)
                     {
@@ -118,9 +118,11 @@ namespace COSMOS.Core.Config
 
             IConfig emptyConfig = null;
             // create config
+
+            string configType = "";
             if (!string.IsNullOrEmpty(reader.Type)) // create not default config
             {
-                string configType = reader.Type;
+                configType = reader.Type;
                 var reflection = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<ConfigAttribute>((a, mri) => a.TypeName == configType);
 
                 foreach (var refl in reflection)
@@ -138,6 +140,7 @@ namespace COSMOS.Core.Config
             else // default config
             {
                 emptyConfig = new Config();
+                configType = "Config";
             }
 
             if (emptyConfig == null)
@@ -149,9 +152,16 @@ namespace COSMOS.Core.Config
             // fill config
             emptyConfig.Name = reader.Name;
 
-            foreach (var arg in reader.GetArgs())
+            if (emptyConfig.Args != null)
             {
-                emptyConfig.Args[arg.Key] = arg.Value;
+                foreach (var arg in reader.GetArgs())
+                {
+                    emptyConfig.Args[arg.Key] = arg.Value;
+                }
+            }
+            else
+            {
+                Log.Error("Arg collection is null. Type:\"" + configType, "Config", "Parse");
             }
 
             if (emptyConfig is IConfigParse)
