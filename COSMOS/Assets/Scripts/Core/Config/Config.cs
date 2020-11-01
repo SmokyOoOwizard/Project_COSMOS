@@ -12,6 +12,7 @@ namespace COSMOS.Core.Config
     {
         public string Name { get; set; }
 
+
         public IRecord this[string name]
         {
             get
@@ -27,6 +28,8 @@ namespace COSMOS.Core.Config
                 args[name] = value;
             }
         }
+
+        public IDictionary<string, string> Args { get; private set; } = new Dictionary<string, string>();
 
         private readonly Dictionary<string, IRecord> args = new Dictionary<string, IRecord>();
 

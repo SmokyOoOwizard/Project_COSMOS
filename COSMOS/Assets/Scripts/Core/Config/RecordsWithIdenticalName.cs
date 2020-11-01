@@ -7,6 +7,8 @@ namespace COSMOS.Core.Config
     {
         public string Name { get; set; }
 
+        public IDictionary<string, string> Args { get; private set; } = new Dictionary<string, string>();
+
         private readonly List<IRecord> records = new List<IRecord>();
 
         public void AddRecord(IRecord record)

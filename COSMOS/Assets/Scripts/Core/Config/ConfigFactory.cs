@@ -89,6 +89,11 @@ namespace COSMOS.Core.Config
                                     Log.Error("It's impossible, but if it happened it's big problem. look at ConfigFactory and IRecord", "Config", "Parse", "BigProblem");
                                 }
 
+                                foreach (var arg in reader.GetArgs())
+                                {
+                                    tmpRecord.Args[arg.Key] = arg.Value;
+                                }
+
                                 record = tmpRecord;
                                 return true;
                             }
@@ -100,6 +105,12 @@ namespace COSMOS.Core.Config
                     var tmp = new Record();
                     tmp.Name = reader.Name;
                     tmp.Value = reader.Value;
+
+                    foreach (var arg in reader.GetArgs())
+                    {
+                        tmp.Args[arg.Key] = arg.Value;
+                    }
+
                     record = tmp;
                     return true;
                 }
@@ -137,6 +148,11 @@ namespace COSMOS.Core.Config
 
             // fill config
             emptyConfig.Name = reader.Name;
+
+            foreach (var arg in reader.GetArgs())
+            {
+                emptyConfig.Args[arg.Key] = arg.Value;
+            }
 
             if (emptyConfig is IConfigParse)
             {
