@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,11 +12,12 @@ namespace COSMOS.Core.Config
     {
         public string Name { get; set; }
 
+
         public IRecord this[string name]
         {
             get
             {
-                if (args.TryGetValue(name, out IRecord arg))
+                if (records.TryGetValue(name, out IRecord arg))
                 {
                     return arg;
                 }
@@ -23,15 +25,17 @@ namespace COSMOS.Core.Config
             }
             set
             {
-                args[name] = value;
+                records[name] = value;
             }
         }
 
-        private readonly Dictionary<string, IRecord> args = new Dictionary<string, IRecord>();
+        public IDictionary<string, string> Args { get; private set; } = new Dictionary<string, string>();
+
+        private readonly Dictionary<string, IRecord> records = new Dictionary<string, IRecord>();
 
         public IConfig GetConfig(string name)
         {
-            if (args.TryGetValue(name, out IRecord record))
+            if (records.TryGetValue(name, out IRecord record))
             {
                 return record as IConfig;
             }
@@ -41,7 +45,7 @@ namespace COSMOS.Core.Config
         public bool TryGetConfig(string name, out IConfig config)
         {
             config = null;
-            if (args.TryGetValue(name, out IRecord record))
+            if (records.TryGetValue(name, out IRecord record))
             {
                 if (record is IConfig)
                 {
@@ -50,6 +54,16 @@ namespace COSMOS.Core.Config
                 }
             }
             return false;
+        }
+
+        public IEnumerator<IRecord> GetEnumerator()
+        {
+            return records.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return records.Values.GetEnumerator();
         }
     }
 }
