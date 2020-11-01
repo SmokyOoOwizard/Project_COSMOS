@@ -3,6 +3,7 @@ using COSMOS.Core.Config;
 using System.Collections.Generic;
 using COSMOS.Core;
 using System.Linq;
+using System.Collections;
 
 namespace ConfigTests
 {
@@ -58,6 +59,16 @@ namespace ConfigTests
             {
                 args.Add(data.Name, data.Record);
                 return true;
+            }
+
+            public IEnumerator<IRecord> GetEnumerator()
+            {
+                return args.Values.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return args.Values.GetEnumerator();
             }
         }
 
@@ -128,7 +139,7 @@ namespace ConfigTests
                 Assert.Fail(ex.ToString());
             }
         }
-        
+
         [Test]
         public void ConfigParseRecordsWithIdenticalNameTest()
         {
@@ -152,8 +163,35 @@ namespace ConfigTests
 
                 var recordsContainer = container as IRecordsWithIdenticalName;
 
-                Assert.IsTrue(recordsContainer.GetRecords().Any(r => r is IRecordWithValue && (r as IRecordWithValue).Value == "test1"));
-                Assert.IsTrue(recordsContainer.GetRecords().Any(r => r is IRecordWithValue && (r as IRecordWithValue).Value == "test2"));
+                Assert.IsTrue(recordsContainer.Any(r => r is IRecordWithValue && (r as IRecordWithValue).Value == "test1"));
+                Assert.IsTrue(recordsContainer.Any(r => r is IRecordWithValue && (r as IRecordWithValue).Value == "test2"));
+            }
+            catch (System.Exception ex)
+            {
+                Assert.Fail(ex.ToString());
+            }
+        }
+
+        [Test]
+        public void ConfigForeachTest()
+        {
+            try
+            {
+                IConfigReader reader = XmlConfigReader.CreateReader(
+                        "<TestName>" +
+                        "   <SubConfig>231</SubConfig>" +
+                        "   <SubConfig>241</SubConfig>" +
+                        "   <SubConfigValue>TestValue</SubConfigValue>" +
+                        "</TestName>");
+
+                var config = ConfigFactory.Factory.ReadConfig(reader);
+
+                Assert.IsNotNull(config);
+                Assert.AreEqual(config.Name, "TestName");
+
+                Assert.IsTrue(config.Any(r => r.Name == "SubConfig" && r is IRecordsWithIdenticalName && (r as IRecordsWithIdenticalName).Any(v => v is IRecordWithValue && (v as IRecordWithValue).Value == "231")));
+                Assert.IsTrue(config.Any(r => r.Name == "SubConfig" && r is IRecordsWithIdenticalName && (r as IRecordsWithIdenticalName).Any(v => v is IRecordWithValue && (v as IRecordWithValue).Value == "241")));
+                Assert.IsTrue(config.Any(r => r.Name == "SubConfigValue" && r is IRecordWithValue && (r as IRecordWithValue).Value == "TestValue"));
             }
             catch (System.Exception ex)
             {

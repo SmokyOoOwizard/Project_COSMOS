@@ -162,6 +162,7 @@ namespace COSMOS.Core.Config
                     else
                     {
                         var recordsContainer = new RecordsWithIdenticalName();
+                        recordsContainer.Name = r.Name;
                         recordsContainer.AddRecord(configValue);
                         recordsContainer.AddRecord(r);
 

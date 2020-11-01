@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace COSMOS.Core.Config
 {
@@ -13,14 +14,19 @@ namespace COSMOS.Core.Config
             records.Add(record);
         }
 
-        public IEnumerable<IRecord> GetRecords()
-        {
-            return records;
-        }
-
         public bool RemoveRecord(IRecord record)
         {
             return records.Remove(record);
+        }
+
+        public IEnumerator<IRecord> GetEnumerator()
+        {
+            return records.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return records.GetEnumerator();
         }
     }
 }

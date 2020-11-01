@@ -1,6 +1,8 @@
-﻿namespace COSMOS.Core.Config
+﻿using System.Collections.Generic;
+
+namespace COSMOS.Core.Config
 {
-    public interface IConfig : IRecord
+    public interface IConfig : IRecord, IEnumerable<IRecord>
     {
         IRecord this[string name]
         {

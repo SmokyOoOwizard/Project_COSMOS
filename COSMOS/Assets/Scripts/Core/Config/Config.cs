@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -50,6 +51,16 @@ namespace COSMOS.Core.Config
                 }
             }
             return false;
+        }
+
+        public IEnumerator<IRecord> GetEnumerator()
+        {
+            return args.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return args.Values.GetEnumerator();
         }
     }
 }
