@@ -24,6 +24,7 @@
             {
                 return;
             }
+            IsFree = true;
 
             OnFree();
         }

@@ -1,7 +1,8 @@
 {
     "name": "COSMOS.ResourceStore",
     "references": [
-        "GUID:0a1abd14e874cb54d8376385190c2b08"
+        "GUID:0a1abd14e874cb54d8376385190c2b08",
+        "GUID:5e8e27b8758f5ea489aeff7291cf21e5"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
