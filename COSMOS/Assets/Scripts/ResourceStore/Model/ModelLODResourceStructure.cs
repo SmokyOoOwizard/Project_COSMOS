@@ -5,6 +5,7 @@ namespace COSMOS.ResourceStore
     public class ModelLODResourceStructure
     {
         public string meshPath;
+        public int Level;
 
         public bool TryParse(IRecord lod)
         {
