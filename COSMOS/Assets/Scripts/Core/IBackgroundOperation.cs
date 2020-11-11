@@ -6,6 +6,21 @@ using System.Threading.Tasks;
 
 namespace COSMOS.Core
 {
+    public class SuccessfulBackgroundOperation<T> : IBackgroundObjectOperation<T>
+    {
+        public T TObject { get; }
+
+        public object Object => TObject;
+
+        public float Percent { get; } = 1;
+
+        public bool IsDone { get; } = true;
+
+        public SuccessfulBackgroundOperation(T obj)
+        {
+            TObject = obj;
+        }
+    }
     public interface IBackgroundOperation
     {
         float Percent { get; }

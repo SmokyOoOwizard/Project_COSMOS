@@ -14,11 +14,22 @@ namespace COSMOS.ResourceStore
             Instance = new ResourceStore();
         }
 
-        private readonly List<ResourceDatabase> connectedDB = new List<ResourceDatabase>();
+        private readonly List<AbstractResourceDatabase> connectedDB = new List<AbstractResourceDatabase>();
+
+
+        private readonly List<IGameObjectDatabase> gameObjectDB = new List<IGameObjectDatabase>();
+        /// <summary>
+        /// texture
+        /// sprite
+        /// audio clip
+        /// material
+        /// text
+        /// 
+        /// </summary>
 
         private object dbLock = new object();
 
-        public bool AddDB(ResourceDatabase database)
+        public bool AddDB(AbstractResourceDatabase database)
         {
             lock (dbLock)
             {
@@ -29,10 +40,14 @@ namespace COSMOS.ResourceStore
 
                 connectedDB.Add(database);
 
+                if (database is IGameObjectDatabase)
+                {
+                    gameObjectDB.Add(database as IGameObjectDatabase);
+                }
                 return true;
             }
         }
-        public ResourceDatabase GetDB(string name)
+        public AbstractResourceDatabase GetDB(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -40,7 +55,7 @@ namespace COSMOS.ResourceStore
             }
             for (int i = 0; i < connectedDB.Count; i++)
             {
-                if(connectedDB[i].Name == name)
+                if (connectedDB[i].Name == name)
                 {
                     return connectedDB[i];
                 }
@@ -74,12 +89,11 @@ namespace COSMOS.ResourceStore
             operation = null;
             return false;
         }
-
         public bool TryGetGameObject(string name, out IBackgroundObjectOperation<GameObject> operation)
         {
             for (int i = 0; i < connectedDB.Count; i++)
             {
-                if(connectedDB[i].TryGetGameObject(name, out IBackgroundObjectOperation<GameObject> op))
+                if (gameObjectDB[i].TryGetGameObject(name, out IBackgroundObjectOperation<GameObject> op))
                 {
                     operation = op;
                     return true;
