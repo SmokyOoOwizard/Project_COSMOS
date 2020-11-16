@@ -2,11 +2,11 @@
 using COSMOS.Core.Config;
 using System.Collections.Generic;
 
+
 namespace COSMOS.ResourceStore
 {
     public class LocalResourceDatabase : AbstractResourceDatabase
     {
-
         private Dictionary<string, Resource> resources = new Dictionary<string, Resource>();
         private Dictionary<string, string> gameObjects = new Dictionary<string, string>();
 
