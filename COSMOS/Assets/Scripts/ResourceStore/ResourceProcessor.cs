@@ -1,11 +1,15 @@
 ﻿#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Sprites;
+using UnityEngine.U2D;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 namespace COSMOS.ResourceStore
 {
@@ -18,115 +22,128 @@ namespace COSMOS.ResourceStore
             if (!UpdateRun)
             {
                 UpdateRun = true;
-                var contex = SynchronizationContext.Current;
-                var assetsPaths = AssetDatabase.GetAllAssetPaths();
-                Task.Run(() =>
+
+                if (!Directory.Exists("Assets/RawResources"))
                 {
-                    try
+                    Directory.CreateDirectory("Assets/RawResources");
+                    UpdateRun = false;
+                }
+                else
+                {
+                    var contex = SynchronizationContext.Current;
+                    var rawAssetsPaths = AssetDatabase.GetAllAssetPaths();
+                    Task.Run(() =>
                     {
-                        Progress.Item mainProgress = null;
-                        contex.Send((n) =>
+                        try
                         {
-                            var progId = Progress.Start("Updating resource database...", null, Progress.Options.Sticky);
-                            mainProgress = Progress.GetProgressById(progId);
-                        }, null);
 
-                        Progress.Item processingProgress = null;
-                        contex.Send((n) =>
-                        {
-                            var progId = Progress.Start("Resource processing...", null, Progress.Options.Sticky, mainProgress.id);
-                            processingProgress = Progress.GetProgressById(progId);
-                        }, null);
-
-                        var xdoc = new XmlDocument();
-                        var xroot = xdoc.CreateElement("ResourceDatabase");
-                        xdoc.AppendChild(xroot);
-
-                        List<string> rightResourcePaths = new List<string>();
-                        List<string> rightAbsPaths = new List<string>();
-                        for (int i = 0; i < assetsPaths.Length; i++)
-                        {
-                            if (assetsPaths[i].StartsWith("Assets/Resources/"))
-                            {
-                                var path = assetsPaths[i].Substring("Assets/Resources/".Length);
-                                var ex = path.Split('.');
-                                if (ex.Length > 1)
-                                {
-                                    path = path.Replace("." + ex[ex.Length - 1], "");
-                                    rightResourcePaths.Add(path);
-                                    rightAbsPaths.Add(assetsPaths[i]);
-                                }
-                            }
-                        }
-
-                        for (int i = 0; i < rightResourcePaths.Count; i++)
-                        {
-                            float percent = ((float)i) / rightResourcePaths.Count;
-                            processingProgress.Report(percent);
-
-                            var resourcePath = rightResourcePaths[i];
-
+                            Progress.Item mainProgress = null;
                             contex.Send((n) =>
                             {
-                                var assetType = AssetDatabase.GetMainAssetTypeAtPath(rightAbsPaths[i]);
-
-                                if (assetType == typeof(GameObject))
-                                {
-                                    processGameObject(resourcePath, xroot, xdoc);
-                                }
-                                else
-                                {
-                                    Log.Warning("Unknown resource type: \"" + assetType + "\" path:\"" + resourcePath + "\"");
-                                }
+                                var progId = Progress.Start("Updating resource database...", null, Progress.Options.Sticky);
+                                mainProgress = Progress.GetProgressById(progId);
                             }, null);
+
+                            string[] assetsPaths = new string[0];
+
+
+                            // find assets in raw resources folder
+                            {
+                                Progress.Item searchingAssetsProgress = null;
+                                contex.Send((n) =>
+                                {
+                                    var progId = Progress.Start("Searching assets...", null, Progress.Options.None, mainProgress.id);
+                                    searchingAssetsProgress = Progress.GetProgressById(progId);
+                                }, null);
+
+                                List<string> tmpAssetsPaths = new List<string>();
+
+                                for (int i = 0; i < rawAssetsPaths.Length; i++)
+                                {
+                                    float percent = ((float)i) / rawAssetsPaths.Length;
+                                    string assetPath = rawAssetsPaths[i];
+                                    if (assetPath.StartsWith("Assets/RawResources/"))
+                                    {
+                                        var pathParts = assetPath.Split('/');
+                                        if (pathParts[pathParts.Length - 1].Contains("."))
+                                        {
+                                            tmpAssetsPaths.Add(assetPath);
+                                        }
+                                    }
+                                    searchingAssetsProgress.Report(percent);
+                                }
+
+                                searchingAssetsProgress.Finish(Progress.Status.Succeeded);
+
+                                assetsPaths = tmpAssetsPaths.ToArray();
+                            }
+
+                            Dictionary<Type, List<string>> sortedAssets = new Dictionary<Type, List<string>>();
+                            // sort assets
+                            {
+                                Progress.Item assetsSortingProgress = null;
+                                contex.Send((n) =>
+                                {
+                                    var progId = Progress.Start("Sorting assets...", null, Progress.Options.None, mainProgress.id);
+                                    assetsSortingProgress = Progress.GetProgressById(progId);
+                                }, null);
+
+                                for (int i = 0; i < assetsPaths.Length; i++)
+                                {
+                                    float percent = ((float)i) / assetsPaths.Length;
+
+                                    string assetPath = assetsPaths[i];
+                                    contex.Send((n) =>
+                                    {
+                                        try
+                                        {
+                                            var loadedAsset = AssetDatabase.LoadMainAssetAtPath(assetPath);
+                                            if (loadedAsset != null)
+                                            {
+                                                if (sortedAssets.TryGetValue(loadedAsset.GetType(), out List<string> assets))
+                                                {
+                                                    assets.Add(assetPath);
+                                                }
+                                                else
+                                                {
+                                                    sortedAssets[loadedAsset.GetType()] = new List<string>() { assetPath };
+                                                }
+                                            }
+                                            else
+                                            {
+                                                Log.Error("Asset load fail", "ResourceProcessor", "AssetsSorting");
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Log.Error(ex);
+                                        }
+                                    }, null);
+
+                                    assetsSortingProgress.Report(percent);
+                                }
+
+                                assetsSortingProgress.Finish(Progress.Status.Succeeded);
+                            }
+
+                            // proccesing textures
+                            // proccesing audio
+                            // proccesing text
+                            // proccesing prefabs
+
+                            mainProgress.Finish();
                         }
-                        processingProgress.Finish();
-
-                        Progress.Item databaseSaveProgress = null;
-                        contex.Send((n) =>
+                        catch (System.Exception ex)
                         {
-                            var progId = Progress.Start("Save resource database...", null, Progress.Options.Sticky, mainProgress.id);
-                            databaseSaveProgress = Progress.GetProgressById(progId);
-                        }, null);
-
-                        var databasePath = "Assets/Resources/ResourceDatabase.xml";
-                        if (System.IO.File.Exists(databasePath))
-                        {
-                            System.IO.File.Delete(databasePath);
+                            Log.Error(ex);
                         }
-                        xdoc.Save(databasePath);
-
-                        contex.Send((n) =>
+                        finally
                         {
-                            AssetDatabase.ImportAsset(databasePath);
-                        }, null);
-
-                        databaseSaveProgress.Finish();
-
-
-
-                        mainProgress.Finish();
-                    }
-                    catch (System.Exception ex)
-                    {
-                        Log.Error(ex);
-                    }
-                    finally
-                    {
-                        UpdateRun = false;
-                    }
-                });
+                            UpdateRun = false;
+                        }
+                    });
+                }
             }
-        }
-
-
-        private static void processGameObject(string assetPath, XmlElement xroot, XmlDocument xdoc)
-        {
-            var element = xdoc.CreateElement("GameObject");
-
-            element.InnerXml = assetPath;
-
-            xroot.AppendChild(element);
         }
     }
 
