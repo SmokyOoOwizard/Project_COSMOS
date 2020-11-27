@@ -6,6 +6,10 @@
 
         public bool IsFree { get; private set; }
 
+        protected ResourceInstance(Resource parent)
+        {
+            Resource = parent;
+        }
 
         public void Free()
         {

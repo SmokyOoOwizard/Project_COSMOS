@@ -11,6 +11,8 @@ namespace COSMOS.Core
 
         private readonly Dictionary<Type, TypeReflectionInfo> types = new Dictionary<Type, TypeReflectionInfo>();
 
+        private readonly Dictionary<string, Type> typesByFullName = new Dictionary<string, Type>();
+
         private object lockObj = new object();
 
         static ReflectionsKeeper()
@@ -26,7 +28,7 @@ namespace COSMOS.Core
                 var assemblies = AppDomain.CurrentDomain.GetAssemblies();
                 foreach (var ass in assemblies)
                 {
-                    if(ass.FullName.StartsWith("Unity") || ass.FullName.StartsWith("System"))
+                    if (ass.FullName.StartsWith("System"))
                     {
                         continue;
                     }
@@ -48,7 +50,8 @@ namespace COSMOS.Core
                 var types = assembly.GetTypes();
                 foreach (var type in types)
                 {
-                    CollectReflection(type);
+                    collectReflection(type);
+                    typesByFullName[type.FullName] = type;
                 }
             }
         }
@@ -97,7 +100,7 @@ namespace COSMOS.Core
                 var result = new List<MemberReflectionInfo>();
                 foreach (var type in types)
                 {
-                    if (type.Value.ContaintsAttribute<T>((a)=>condition(a, type.Value)))
+                    if (type.Value.ContaintsAttribute<T>((a) => condition(a, type.Value)))
                     {
                         result.Add(type.Value);
                     }
@@ -105,6 +108,14 @@ namespace COSMOS.Core
                 }
                 return result;
             }
+        }
+        public bool TryGetTypeByFullName(string fullName, out Type type)
+        {
+            if(typesByFullName.TryGetValue(fullName, out type))
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

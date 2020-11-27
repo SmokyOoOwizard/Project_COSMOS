@@ -26,6 +26,8 @@ namespace COSMOS.ResourceStore
 
         private readonly List<ResourceInstance> instances = new List<ResourceInstance>();
 
+        private readonly List<Resource> linkedResources = new List<Resource>();
+
         private readonly object instancesLock = new object();
         private readonly object tryLoadUnloadLock = new object();
 
@@ -102,16 +104,6 @@ namespace COSMOS.ResourceStore
         }
         protected abstract void OnReturnInstance(ResourceInstance instance);
 
-        public bool _TryParseResourceStructure(ResourceStructure structure)
-        {
-            if (structure == null)
-            {
-                return false;
-            }
-            return TryParseResourceStucture(structure);
-        }
-        protected abstract bool TryParseResourceStucture(ResourceStructure structure);
-
 
         internal void ForceReturnInstances()
         {
@@ -123,6 +115,69 @@ namespace COSMOS.ResourceStore
                     OnReturnInstance(instance);
                 }
                 instances.Clear();
+            }
+        }
+
+        protected void LinkResource(Resource resourceToLink)
+        {
+            linkedResources.Remove(resourceToLink);
+            linkedResources.Add(resourceToLink);
+        }
+        protected void UnLinkResource(Resource resourceToUnlink)
+        {
+            linkedResources.Remove(resourceToUnlink);
+        }
+        protected void UnLinkAllResources()
+        {
+            linkedResources.Clear();
+        }
+
+        protected bool LinkedResourcesLoaded()
+        {
+            for (int i = 0; i < linkedResources.Count; i++)
+            {
+                if (linkedResources[i].CurrentStatus != Status.Loaded)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        protected bool LinkedResourcesUnloaded()
+        {
+            for (int i = 0; i < linkedResources.Count; i++)
+            {
+                if (linkedResources[i].CurrentStatus != Status.Unloaded)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        protected bool AnyLinkedResourcesWithError()
+        {
+            for (int i = 0; i < linkedResources.Count; i++)
+            {
+                if (linkedResources[i].CurrentStatus == Status.Error)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        protected void TryLoadLinkedResources()
+        {
+            for (int i = 0; i < linkedResources.Count; i++)
+            {
+                linkedResources[i].TryLoad();
+            }
+        }
+        protected void TryUnloadLinkedResources()
+        {
+            for (int i = 0; i < linkedResources.Count; i++)
+            {
+                linkedResources[i].TryUnload();
             }
         }
     }

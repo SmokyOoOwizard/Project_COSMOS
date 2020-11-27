@@ -4,7 +4,8 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "COSMOS.ResourceStore",
-        "COSMOS.Core"
+        "COSMOS.Core",
+        "BestBundle"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

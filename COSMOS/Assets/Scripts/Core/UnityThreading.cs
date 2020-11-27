@@ -108,11 +108,22 @@ namespace COSMOS.Core
         static Dictionary<GameObject, ExecuteObject> ExecuteObjects = new Dictionary<GameObject, ExecuteObject>();
         static ExecuteObject MainObject;
 
+        private static bool inited = false;
+
+        private static object lockObj = new object();
+
         public static void Init()
         {
-            ExecuteObjects.Clear();
-            MainObject = new GameObject("Main threading object").AddComponent<ExecuteObject>();
-            GameObject.DontDestroyOnLoad(MainObject.gameObject);
+            lock (lockObj)
+            {
+                if (!inited)
+                {
+                    inited = true;
+                    ExecuteObjects.Clear();
+                    MainObject = new GameObject("Main threading object").AddComponent<ExecuteObject>();
+                    GameObject.DontDestroyOnLoad(MainObject.gameObject);
+                }
+            }
         }
 
         public static void Execute(Action action, Queue queue = Queue.Update)

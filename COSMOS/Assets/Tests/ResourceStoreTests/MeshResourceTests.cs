@@ -1,19 +1,20 @@
-﻿using BestBundle;
-using BestBundle.UnityResources;
-using COSMOS.Core;
-using COSMOS.ResourceStore;
-using NUnit.Framework;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.IO;
 using System.Threading;
+using System.Collections.Generic;
+using NUnit.Framework;
 using UnityEngine;
+using COSMOS.ResourceStore;
+using COSMOS.Core;
 using UnityEngine.TestTools;
+using BestBundle;
+using BestBundle.UnityResources;
 
 namespace Tests
 {
-    public class ModelResourceTests
+    public class MeshResourceTests
     {
+        private Mesh originalMesh;
         private byte[] savedMeshBundle;
 
         [UnitySetUp]
@@ -25,22 +26,16 @@ namespace Tests
         }
 
         [UnityTest, Order(0)]
-        public IEnumerator RuntimeCreateBundleWithModel()
+        public IEnumerator RuntimeCreateBundleWithMesh()
         {
             using (MemoryStream ms = new MemoryStream())
             {
                 var obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-
                 var mesh = obj.GetComponent<MeshFilter>().sharedMesh;
 
-                mesh.name = "CubeMesh";
+                originalMesh = mesh;
 
-                ModelStructureBundleEntity msbe = new ModelStructureBundleEntity();
-
-                msbe.meshId = "TestMesh";
-                msbe.name = "Cube";
-
-                BundleFactory.Instance.CreateBundle(ms, "TestBundle", new Dictionary<string, IBundleEntity>() { { "TestMesh", new MeshEntity(mesh) }, {"TestModel", msbe } });
+                BundleFactory.Instance.CreateBundle(ms, "TestBundle", new Dictionary<string, IBundleEntity>() { { "TestMesh", new MeshEntity(mesh) } });
 
                 savedMeshBundle = ms.ToArray();
             }
@@ -48,7 +43,7 @@ namespace Tests
         }
 
         [UnityTest, Order(1)]
-        public IEnumerator ModelLoadAndGetInstnaceTest()
+        public IEnumerator MeshLoadAndGetInstnaceTest()
         {
             Assert.IsNotNull(savedMeshBundle);
             Assert.NotZero(savedMeshBundle.Length);
@@ -58,13 +53,13 @@ namespace Tests
 
                 ResourceStore.Instance.AddDB(new BundleResourceDatabase(bundle));
 
-                Assert.IsTrue(ResourceStore.Instance.TryGetResource("TestModel", out Resource resource));
+                Assert.IsTrue(ResourceStore.Instance.TryGetResource("TestMesh", out Resource resource));
 
                 Assert.IsNotNull(resource);
 
                 Assert.AreEqual(resource.CurrentStatus, Resource.Status.Unloaded);
 
-                Assert.IsTrue(resource is ModelResource);
+                Assert.AreEqual(resource.GetType(), typeof(BundleMeshResource));
 
                 resource.TryLoad();
 
@@ -85,27 +80,15 @@ namespace Tests
                     Assert.AreEqual(resource.CurrentStatus, Resource.Status.Loaded);
                 }
 
-                var resourceInstance = resource.GetInstance();
+                var resInstance = resource.GetInstance();
 
-                Assert.IsNotNull(resourceInstance);
+                Assert.IsNotNull(resInstance);
 
-                Assert.AreEqual(typeof(ModelResourceInstance), resourceInstance.GetType());
+                Assert.AreEqual(resInstance.GetType(), typeof(MeshResourceInstance));
 
-                var modelInstance = resourceInstance as ModelResourceInstance;
-
-                Assert.IsNotNull(modelInstance.Model);
-
-                Assert.AreEqual("Cube", modelInstance.Model.name);
-
-                var meshFilter = modelInstance.Model.GetComponent<MeshFilter>();
-
-                Assert.IsNotNull(meshFilter);
-
-                Assert.IsNotNull(meshFilter.sharedMesh);
-
-                Assert.AreEqual("CubeMesh", meshFilter.sharedMesh.name);
-
+                Assert.AreEqual((resInstance as MeshResourceInstance).MeshInstance.name, originalMesh.name);
             }
+
 
             yield return null;
         }

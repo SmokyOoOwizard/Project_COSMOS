@@ -2,6 +2,7 @@
 using UnityEngine;
 
 using COSMOS.Core;
+using System;
 
 namespace COSMOS.ResourceStore
 {
@@ -16,8 +17,10 @@ namespace COSMOS.ResourceStore
 
         private readonly List<AbstractResourceDatabase> connectedDB = new List<AbstractResourceDatabase>();
 
+        private readonly List<AbstractResourceDatabase> databasesWithSomeResource = new List<AbstractResourceDatabase>();
 
-        private readonly List<IGameObjectDatabase> gameObjectDB = new List<IGameObjectDatabase>();
+        private readonly Dictionary<Type, List<AbstractResourceDatabase>> databasesByContaintsType = new Dictionary<Type, List<AbstractResourceDatabase>>();
+
         /// <summary>
         /// texture
         /// sprite
@@ -39,10 +42,25 @@ namespace COSMOS.ResourceStore
                 }
 
                 connectedDB.Add(database);
-
-                if (database is IGameObjectDatabase)
+                if (database is IHasContainsTypes)
                 {
-                    gameObjectDB.Add(database as IGameObjectDatabase);
+                    var types = (database as IHasContainsTypes).GetContainsTypes();
+                    for (int i = 0; i < types.Length; i++)
+                    {
+                        var type = types[i];
+                        if (databasesByContaintsType.TryGetValue(type, out List<AbstractResourceDatabase> dbList))
+                        {
+                            dbList.Add(database);
+                        }
+                        else
+                        {
+                            databasesByContaintsType[type] = new List<AbstractResourceDatabase>() { database };
+                        }
+                    }
+                }
+                else if (database is IUnknowContainsTypes)
+                {
+                    databasesWithSomeResource.Add(database);
                 }
                 return true;
             }
@@ -63,11 +81,11 @@ namespace COSMOS.ResourceStore
             return null;
         }
 
-        public bool TryGetResource(string name, out IBackgroundObjectOperation<Resource> operation)
+        public bool TryGetResource(string name, out Resource operation)
         {
             for (int i = 0; i < connectedDB.Count; i++)
             {
-                if (connectedDB[i].TryGetResource(name, out IBackgroundObjectOperation<Resource> op))
+                if (connectedDB[i].TryGetResource(name, out Resource op))
                 {
                     operation = op;
                     return true;
@@ -76,27 +94,40 @@ namespace COSMOS.ResourceStore
             operation = null;
             return false;
         }
-        public bool TryGetResource<T>(string name, out IBackgroundObjectOperation<T> operation) where T : Resource
+        public bool TryGetResource<T>(string name, out T operation) where T : Resource
         {
-            for (int i = 0; i < connectedDB.Count; i++)
+            List<AbstractResourceDatabase> dbList = null;
+
+            var resourceType = typeof(T);
+            foreach (var item in databasesByContaintsType)
             {
-                if (connectedDB[i].TryGetResource<T>(name, out IBackgroundObjectOperation<T> op))
+                if (resourceType.IsSubclassOf(item.Key) || resourceType == item.Key)
                 {
-                    operation = op;
-                    return true;
+                    dbList = item.Value;
+                    break;
                 }
             }
-            operation = null;
-            return false;
-        }
-        public bool TryGetGameObject(string name, out IBackgroundObjectOperation<GameObject> operation)
-        {
-            for (int i = 0; i < connectedDB.Count; i++)
+
+            if (dbList != null)
             {
-                if (gameObjectDB[i].TryGetGameObject(name, out IBackgroundObjectOperation<GameObject> op))
+                for (int i = 0; i < dbList.Count; i++)
                 {
-                    operation = op;
-                    return true;
+                    if (dbList[i].TryGetResource<T>(name, out T op))
+                    {
+                        operation = op;
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < databasesWithSomeResource.Count; i++)
+                {
+                    if (databasesWithSomeResource[i].TryGetResource<T>(name, out T op))
+                    {
+                        operation = op;
+                        return true;
+                    }
                 }
             }
             operation = null;
