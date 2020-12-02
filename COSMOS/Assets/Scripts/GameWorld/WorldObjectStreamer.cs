@@ -41,7 +41,7 @@ namespace COSMOS.GameWorld
 
             if (go == null)
             {
-                if (GameData.IsMainThread)
+                if (UnityThreading.IsMainThread)
                 {
                     go = new GameObject("Empty World Object: " + worldObject.GetType());
                 }
@@ -51,7 +51,7 @@ namespace COSMOS.GameWorld
                 }
             }
 
-            if (GameData.IsMainThread)
+            if (UnityThreading.IsMainThread)
             {
                 var obj = spawn();
 

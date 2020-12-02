@@ -1,9 +1,7 @@
-﻿namespace COSMOS.Core.Config
+﻿using System.Collections.Generic;
+
+namespace COSMOS.Core.Config
 {
-    public interface IConfigReaderErrorInfo
-    {
-        string GetInfoForError();
-    }
     public interface IConfigReader
     {
         bool HasChildren { get; }
@@ -13,5 +11,7 @@
         string Type { get; }
         string Name { get; }
         string Value { get; }
+
+        IEnumerable<KeyValuePair<string, string>> GetArgs();
     }
 }

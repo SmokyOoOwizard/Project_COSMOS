@@ -1,0 +1,17 @@
+{
+    "name": "COSMOS.ResourceStore",
+    "references": [
+        "GUID:0a1abd14e874cb54d8376385190c2b08",
+        "GUID:5e8e27b8758f5ea489aeff7291cf21e5",
+        "GUID:1cb136132dfc3c24cb9cb85595963190"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

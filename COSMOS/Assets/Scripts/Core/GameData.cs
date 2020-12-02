@@ -8,8 +8,6 @@ namespace COSMOS.Core
 {
     public static class GameData
     {
-        public static bool IsMainThread { get { return isMainThread; } }
-        [ThreadStatic]
-        private static bool isMainThread;
+
     }
 }

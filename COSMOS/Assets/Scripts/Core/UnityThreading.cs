@@ -33,6 +33,11 @@ namespace COSMOS.Core
             public int CountOfQueueExecutePerFixedUpdate = 100;
             public bool UseClampForFixedUpdate = false;
 
+            private void Awake()
+            {
+                UnityThreading.isMainThread = true;
+            }
+
 
             private void Update()
             {
@@ -95,14 +100,30 @@ namespace COSMOS.Core
             }
 
         }
+
+        public static bool IsMainThread { get { return isMainThread; } }
+        [ThreadStatic]
+        private static bool isMainThread;
+
         static Dictionary<GameObject, ExecuteObject> ExecuteObjects = new Dictionary<GameObject, ExecuteObject>();
         static ExecuteObject MainObject;
 
+        private static bool inited = false;
+
+        private static object lockObj = new object();
+
         public static void Init()
         {
-            ExecuteObjects.Clear();
-            MainObject = new GameObject("Main threading object").AddComponent<ExecuteObject>();
-            GameObject.DontDestroyOnLoad(MainObject.gameObject);
+            lock (lockObj)
+            {
+                if (!inited)
+                {
+                    inited = true;
+                    ExecuteObjects.Clear();
+                    MainObject = new GameObject("Main threading object").AddComponent<ExecuteObject>();
+                    GameObject.DontDestroyOnLoad(MainObject.gameObject);
+                }
+            }
         }
 
         public static void Execute(Action action, Queue queue = Queue.Update)
@@ -126,7 +147,7 @@ namespace COSMOS.Core
         public static void WaitExecute(Action action, Queue queue = Queue.Update)
         {
             Thread thread = Thread.CurrentThread;
-            if (GameData.IsMainThread)
+            if (IsMainThread)
             {
                 action?.Invoke();
             }

@@ -59,8 +59,8 @@ namespace COSMOS.Core.Config
             {
                 if (!string.IsNullOrEmpty(reader.Type)) // create not default record
                 {
-                    string configType = reader.Type;
-                    var reflection = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<ConfigAttribute>((a, mri) => a.TypeName == configType);
+                    string recordType = reader.Type;
+                    var reflection = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<ConfigAttribute>((a, mri) => a.TypeName == recordType);
 
                     foreach (var refl in reflection)
                     {
@@ -89,6 +89,11 @@ namespace COSMOS.Core.Config
                                     Log.Error("It's impossible, but if it happened it's big problem. look at ConfigFactory and IRecord", "Config", "Parse", "BigProblem");
                                 }
 
+                                foreach (var arg in reader.GetArgs())
+                                {
+                                    tmpRecord.Args[arg.Key] = arg.Value;
+                                }
+
                                 record = tmpRecord;
                                 return true;
                             }
@@ -100,6 +105,12 @@ namespace COSMOS.Core.Config
                     var tmp = new Record();
                     tmp.Name = reader.Name;
                     tmp.Value = reader.Value;
+
+                    foreach (var arg in reader.GetArgs())
+                    {
+                        tmp.Args[arg.Key] = arg.Value;
+                    }
+
                     record = tmp;
                     return true;
                 }
@@ -107,9 +118,11 @@ namespace COSMOS.Core.Config
 
             IConfig emptyConfig = null;
             // create config
+
+            string configType = "";
             if (!string.IsNullOrEmpty(reader.Type)) // create not default config
             {
-                string configType = reader.Type;
+                configType = reader.Type;
                 var reflection = ReflectionsKeeper.instance.GetAllWithAttributeByCondition<ConfigAttribute>((a, mri) => a.TypeName == configType);
 
                 foreach (var refl in reflection)
@@ -127,6 +140,7 @@ namespace COSMOS.Core.Config
             else // default config
             {
                 emptyConfig = new Config();
+                configType = "Config";
             }
 
             if (emptyConfig == null)
@@ -137,6 +151,18 @@ namespace COSMOS.Core.Config
 
             // fill config
             emptyConfig.Name = reader.Name;
+
+            if (emptyConfig.Args != null)
+            {
+                foreach (var arg in reader.GetArgs())
+                {
+                    emptyConfig.Args[arg.Key] = arg.Value;
+                }
+            }
+            else
+            {
+                Log.Error("Arg collection is null. Type:\"" + configType, "Config", "Parse");
+            }
 
             if (emptyConfig is IConfigParse)
             {
@@ -150,7 +176,24 @@ namespace COSMOS.Core.Config
             {
                 foreach (var r in children)
                 {
-                    emptyConfig[r.Name] = r;
+                    var configValue = emptyConfig[r.Name];
+                    if (configValue == null)
+                    {
+                        emptyConfig[r.Name] = r;
+                    }
+                    else if (configValue is IRecordsWithIdenticalName)
+                    {
+                        (configValue as IRecordsWithIdenticalName).AddRecord(r);
+                    }
+                    else
+                    {
+                        var recordsContainer = new RecordsWithIdenticalName();
+                        recordsContainer.Name = r.Name;
+                        recordsContainer.AddRecord(configValue);
+                        recordsContainer.AddRecord(r);
+
+                        emptyConfig[r.Name] = recordsContainer;
+                    }
                 }
             }
 

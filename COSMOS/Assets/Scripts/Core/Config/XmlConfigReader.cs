@@ -1,5 +1,6 @@
 ﻿using System.Xml;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace COSMOS.Core.Config
 {
@@ -95,6 +96,11 @@ namespace COSMOS.Core.Config
             }
 
             return info;
+        }
+
+        public IEnumerable<KeyValuePair<string, string>> GetArgs()
+        {
+            return Enumerable.Select(root.Attributes.Cast<XmlAttribute>(), a => new KeyValuePair<string, string>(a.Name, a.Value));
         }
     }
 }
